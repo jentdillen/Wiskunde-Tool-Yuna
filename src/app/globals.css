@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Keep UI classroom-friendly (always light) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes astronautFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes rocketFlame {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleY(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateX(-50%) scaleY(1.25);
+    opacity: 0.7;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes launchRocket {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-34px);
+    opacity: 0.85;
+  }
+}
+
+.astronaut-float {
+  animation: astronautFloat 1.8s ease-in-out infinite;
+}
+
+.rocket-flame {
+  animation: rocketFlame 0.5s ease-in-out infinite;
+}
+
+.twinkle {
+  animation: twinkle 2.2s ease-in-out infinite;
+}
+
+.launch-rocket {
+  animation: launchRocket 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes astronautHappy {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg) scale(1.04);
+  }
+}
+
+@keyframes astronautEncourage {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  75% {
+    transform: translateX(4px) rotate(1deg);
+  }
+}
+
+.astronaut-float.astronaut-mood-happy {
+  animation: astronautHappy 0.9s ease-in-out infinite;
+}
+
+.astronaut-float.astronaut-mood-encourage {
+  animation: astronautEncourage 0.55s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .astronaut-float {
+    transform: scale(0.92);
+    transform-origin: bottom center;
+  }
+}
+
+@keyframes auroraShift {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(8deg) scale(1.05);
+    opacity: 0.7;
+  }
+}
+
+.aurora-shift {
+  animation: auroraShift 18s ease-in-out infinite;
+}
+
+@keyframes spaceDrift1 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(24px, -18px);
+  }
+}
+
+@keyframes spaceDrift2 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-20px, 22px);
+  }
+}
+
+@keyframes spaceDrift3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, 14px) scale(1.08);
+  }
+}
+
+.space-drift-1 {
+  animation: spaceDrift1 14s ease-in-out infinite;
+}
+
+.space-drift-2 {
+  animation: spaceDrift2 16s ease-in-out infinite;
+}
+
+.space-drift-3 {
+  animation: spaceDrift3 11s ease-in-out infinite;
+}
+
+@keyframes meteorStreak {
+  0% {
+    transform: translate(40px, -20px) rotate(215deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-120px, 80px) rotate(215deg);
+    opacity: 0;
+  }
+}
+
+.meteor {
+  animation: meteorStreak 5s ease-in infinite;
+}
+
+.meteor-delay {
+  animation: meteorStreak 6.5s ease-in infinite;
+  animation-delay: 2.5s;
+}
