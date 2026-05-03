@@ -23,6 +23,7 @@ import {
   type Question,
 } from "@/lib/math";
 import { SpacePracticeBackdrop } from "@/components/SpaceBackdrop";
+import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { isMissionUnlockedForKid, sortMissionsByDifficultyThenCreated } from "@/lib/missions";
 import { playSuccessBeep } from "@/lib/sound";
 import { getSupabase } from "@/lib/supabase/client";
@@ -417,6 +418,9 @@ function OefenenInner() {
         </div>
       ) : null}
 
+      <div className="relative z-10 flex w-full shrink-0 items-center px-3 pt-[max(0.35rem,env(safe-area-inset-top))] pb-2 sm:px-4">
+        <RekenRaketBrandLink />
+      </div>
       <div className="relative z-10 h-2 w-full shrink-0 bg-slate-800/90 shadow-[0_1px_0_rgba(34,211,238,0.15)]">
         <div
           className="h-full bg-gradient-to-r from-cyan-400 to-amber-400 transition-all duration-500"

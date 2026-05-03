@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import { getSupabase } from "@/lib/supabase/client";
@@ -35,7 +36,8 @@ export default function TeacherLoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-violet-50 to-indigo-50 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
-      <div className="mx-auto flex w-full max-w-md justify-end pb-2">
+      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 pb-2">
+        <RekenRaketBrandLink />
         <LanguageToggle />
       </div>
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { MissionPlanet } from "@/components/missions/MissionPlanet";
+import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { MissionRow } from "@/lib/db";
@@ -84,7 +85,8 @@ export default function MissiesPage() {
     <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.1),transparent_50%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(167,139,250,0.08),transparent_45%)]" />
-      <div className="relative z-20 flex w-full justify-end pb-2">
+      <div className="relative z-20 flex w-full items-center justify-between gap-3 pb-2">
+        <RekenRaketBrandLink />
         <LanguageToggle variant="dark" />
       </div>
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { TeacherDashboard } from "@/components/TeacherDashboard";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -54,7 +55,8 @@ export default function TeacherPage() {
 
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-violet-50 via-white to-indigo-50 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:py-6">
-      <div className="mx-auto mb-3 flex w-full max-w-4xl justify-end">
+      <div className="mx-auto mb-3 flex w-full max-w-4xl items-center justify-between gap-3">
+        <RekenRaketBrandLink />
         <LanguageToggle />
       </div>
       <div className="mx-auto w-full max-w-4xl">
