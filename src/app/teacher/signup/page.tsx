@@ -7,6 +7,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
+import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function TeacherSignupPage() {
@@ -28,27 +29,44 @@ export default function TeacherSignupPage() {
     setBusy(true);
     setError(null);
     setInfo(null);
-    const { data, error: err } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: {
-          full_name: fullName.trim(),
-          school_name: schoolName.trim(),
-          address_as: addressAs,
+    try {
+      const emailTrim = email.trim();
+      const { data, error: err } = await supabase.auth.signUp({
+        email: emailTrim,
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            school_name: schoolName.trim(),
+            address_as: addressAs,
+          },
         },
-      },
-    });
-    setBusy(false);
-    if (err) {
-      setError(err.message);
-      return;
+      });
+      if (err) {
+        setError(formatTeacherAuthError(err.message, t));
+        return;
+      }
+      if (data.session) {
+        router.replace("/teacher");
+        return;
+      }
+      // Geen sessie (vaak omdat Supabase e-mailbevestiging verplicht): meteen inloggen proberen.
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: emailTrim,
+        password,
+      });
+      if (!signInErr && signInData.session) {
+        router.replace("/teacher");
+        return;
+      }
+      if (signInErr) {
+        setError(formatTeacherAuthError(signInErr.message, t));
+        return;
+      }
+      setInfo(t("signupConfirmEmail"));
+    } finally {
+      setBusy(false);
     }
-    if (data.session) {
-      router.replace("/teacher");
-      return;
-    }
-    setInfo(t("signupConfirmEmail"));
   };
 
   if (!supabase) return <SetupRequired />;

@@ -136,6 +136,9 @@ export const translations = {
     haveAccount: "Al een account? Inloggen",
     needAccount: "Nog geen account? Registreren",
     signupConfirmEmail: "Bevestig je e-mail om verder te gaan (check je inbox).",
+    authErrEmailNotConfirmed:
+      "Je account bestaat, maar je e-mail is nog niet bevestigd. Geen mail ontvangen? Controleer spam. Voor direct inloggen na registreren: in Supabase → Authentication → Providers → Email → zet «Confirm email» uit (en stel eventueel SMTP in als je bevestiging wél wilt).",
+    authErrInvalidCredentials: "E-mail of wachtwoord klopt niet.",
     back: "Terug",
     fullNameLabel: "Volledige naam",
     teacherStudentLoginHint:
@@ -374,6 +377,9 @@ export const translations = {
     haveAccount: "Already have an account? Log in",
     needAccount: "Need an account? Sign up",
     signupConfirmEmail: "Confirm your email to continue (check your inbox).",
+    authErrEmailNotConfirmed:
+      "Your account exists, but your email isn’t confirmed yet. No message? Check spam. For instant login after sign-up: in Supabase go to Authentication → Providers → Email → turn off «Confirm email» (configure SMTP if you want confirmation emails).",
+    authErrInvalidCredentials: "Invalid email or password.",
     back: "Back",
     fullNameLabel: "Full name",
     teacherStudentLoginHint:

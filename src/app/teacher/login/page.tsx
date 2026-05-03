@@ -7,6 +7,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
+import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function TeacherLoginPage() {
@@ -26,7 +27,7 @@ export default function TeacherLoginPage() {
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
     if (err) {
-      setError(err.message);
+      setError(formatTeacherAuthError(err.message, t));
       return;
     }
     router.replace("/teacher");
