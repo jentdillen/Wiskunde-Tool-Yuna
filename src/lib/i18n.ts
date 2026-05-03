@@ -2,7 +2,8 @@ export type Locale = "nl" | "en";
 
 export const translations = {
   nl: {
-    appTitle: "Wiskunde Tool",
+    appTitle: "reken raket",
+    brandHomeAria: "reken raket — naar start",
     teacherLink: "Docent",
     kidHome: "Leerling",
     localeNl: "NL",
@@ -239,7 +240,8 @@ export const translations = {
     missionRetryButton: "Opnieuw proberen",
   },
   en: {
-    appTitle: "Math Tool",
+    appTitle: "reken raket",
+    brandHomeAria: "reken raket — home",
     teacherLink: "Teacher",
     kidHome: "Student",
     localeNl: "NL",

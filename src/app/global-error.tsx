@@ -23,7 +23,7 @@ export default function GlobalError({
             gap: 16,
           }}
         >
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800 }}>Wiskunde Tool — fout</h1>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800 }}>reken raket — fout</h1>
           <p style={{ maxWidth: 420, fontSize: "0.9rem", lineHeight: 1.5, color: "#475569" }}>
             De app kon niet starten. Vernieuw de pagina. Werkt het nog niet, controleer je internetverbinding of probeer een
             privévenster (soms blokkeert een oude sessie).
