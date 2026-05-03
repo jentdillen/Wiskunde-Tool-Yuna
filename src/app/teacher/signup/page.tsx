@@ -16,6 +16,7 @@ export default function TeacherSignupPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [schoolName, setSchoolName] = useState("");
+  const [addressAs, setAddressAs] = useState<"meester" | "juf">("juf");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,6 +34,7 @@ export default function TeacherSignupPage() {
         data: {
           full_name: fullName.trim(),
           school_name: schoolName.trim(),
+          address_as: addressAs,
         },
       },
     });
@@ -95,6 +97,32 @@ export default function TeacherSignupPage() {
               onChange={(e) => setFullName(e.target.value)}
             />
           </div>
+          <fieldset>
+            <legend className="block text-sm font-bold text-slate-700">{t("teacherAddressAsLabel")}</legend>
+            <p className="mt-1 text-xs text-slate-500">{t("teacherAddressAsHint")}</p>
+            <div className="mt-3 flex flex-wrap gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                <input
+                  type="radio"
+                  name="addressAs"
+                  className="h-4 w-4"
+                  checked={addressAs === "meester"}
+                  onChange={() => setAddressAs("meester")}
+                />
+                {t("teacherAddressMeester")}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                <input
+                  type="radio"
+                  name="addressAs"
+                  className="h-4 w-4"
+                  checked={addressAs === "juf"}
+                  onChange={() => setAddressAs("juf")}
+                />
+                {t("teacherAddressJuf")}
+              </label>
+            </div>
+          </fieldset>
           <div>
             <label className="block text-sm font-bold text-slate-700">{t("joinSchool")}</label>
             <input

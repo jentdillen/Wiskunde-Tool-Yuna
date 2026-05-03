@@ -5,6 +5,8 @@ export type TeacherProfileRow = {
   user_id: string;
   full_name: string;
   school_name: string;
+  /** Aanspreekvorm voor leerlingen (DB: meester | juf). */
+  address_as?: "meester" | "juf";
   created_at: string;
 };
 
@@ -53,6 +55,8 @@ export type ClassLookupRow = {
   class_label: string;
   school_name: string;
   teacher_name: string;
+  /** Ontbreekt bij oude API; na migratie altijd aanwezig. */
+  teacher_address_as?: "meester" | "juf";
 };
 
 export type StudentHelpRequestRow = {

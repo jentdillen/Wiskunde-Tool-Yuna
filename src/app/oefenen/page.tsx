@@ -8,7 +8,13 @@ import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { MissionRow } from "@/lib/db";
 import { verifyKidMatchesSession } from "@/lib/kid-auth";
-import { clearKidJoinDraft, readKidJoinDraft, recordMissionCompletion, writeKidJoinDraft } from "@/lib/kid-session";
+import {
+  clearKidJoinDraft,
+  readKidJoinDraft,
+  recordMissionCompletion,
+  teacherCallName,
+  writeKidJoinDraft,
+} from "@/lib/kid-session";
 import {
   type OperationMode,
   formatQuestion,
@@ -24,12 +30,6 @@ function missionProgress(correct: number, target: number): number {
 }
 
 const WRONG_BEFORE_HELP = 4;
-
-function teacherCallName(display?: string): string {
-  const s = (display ?? "").trim();
-  if (!s) return "";
-  return s.split(/\s+/)[0] ?? s;
-}
 
 function OefenenInner() {
   const { t } = useLocale();
@@ -115,6 +115,24 @@ function OefenenInner() {
       void supabase.removeChannel(channel);
     };
   }, [supabase, helpRequestId]);
+
+  /** Realtime (postgres_changes) faalt soms als replication niet volledig staat; polling vangt «Ik kom helpen». */
+  useEffect(() => {
+    if (!supabase || !helpRequestId || teacherOnWay || missionComplete) return;
+
+    const poll = async () => {
+      const { data } = await supabase
+        .from("student_help_requests")
+        .select("status")
+        .eq("id", helpRequestId)
+        .maybeSingle();
+      if (data?.status === "on_way") setTeacherOnWay(true);
+    };
+
+    void poll();
+    const id = window.setInterval(() => void poll(), 2000);
+    return () => window.clearInterval(id);
+  }, [supabase, helpRequestId, teacherOnWay, missionComplete]);
 
   const sendHelpRequest = useCallback(async () => {
     if (!supabase || !mission || !studentId || !attemptId || !question) return;
@@ -286,9 +304,56 @@ function OefenenInner() {
     );
   }
 
+  const teacherOnWayCardTitle = (() => {
+    const draft = readKidJoinDraft();
+    const name = teacherCallName(draft?.teacherDisplayName);
+    const addr = draft?.teacherAddressAs;
+    if (!name) return t("practiceTeacherOnWayCardGeneric");
+    if (addr === "meester") return t("practiceTeacherOnWayCardMeester", { name });
+    if (addr === "juf") return t("practiceTeacherOnWayCardJuf", { name });
+    return t("practiceTeacherOnWayCard", { name });
+  })();
+
+  const teacherHelpButtonLabel = (() => {
+    const draft = readKidJoinDraft();
+    const name = teacherCallName(draft?.teacherDisplayName);
+    if (!name) return t("practiceAskHelpGeneric");
+    const addr = draft?.teacherAddressAs;
+    if (addr === "meester") {
+      const salutation = `${t("teacherAddressMeester")} ${name}`;
+      return t("practiceAskHelp", { name: salutation });
+    }
+    if (addr === "juf") {
+      const salutation = `${t("teacherAddressJuf")} ${name}`;
+      return t("practiceAskHelp", { name: salutation });
+    }
+    return t("practiceAskHelp", { name });
+  })();
+
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col bg-slate-950">
       <SpacePracticeBackdrop />
+
+      {teacherOnWay && !missionComplete ? (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
+          role="alertdialog"
+          aria-live="assertive"
+          aria-labelledby="teacher-on-way-title"
+        >
+          <div className="w-full max-w-lg rounded-[2rem] border-[6px] border-emerald-400 bg-gradient-to-b from-emerald-500 via-emerald-700 to-emerald-950 p-8 shadow-[0_0_0_4px_rgba(16,185,129,0.25),0_24px_80px_rgba(0,0,0,0.45)] sm:p-12">
+            <p
+              id="teacher-on-way-title"
+              className="text-center text-3xl font-black leading-[1.15] tracking-tight text-white sm:text-4xl md:text-5xl"
+            >
+              {teacherOnWayCardTitle}
+            </p>
+            <p className="mt-6 text-center text-xl font-bold text-emerald-50 sm:text-2xl md:text-3xl">
+              {t("practiceTeacherOnWayCardSub")}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="relative z-10 h-2 w-full shrink-0 bg-slate-800/90 shadow-[0_1px_0_rgba(34,211,238,0.15)]">
         <div
@@ -324,20 +389,6 @@ function OefenenInner() {
             </div>
 
             <div className="flex w-full max-w-md flex-1 flex-col items-center text-center">
-              {teacherOnWay ? (
-                <p
-                  className="mb-3 w-full rounded-xl border border-emerald-400/50 bg-emerald-950/50 px-4 py-3 text-sm font-bold text-emerald-100"
-                  role="status"
-                >
-                  {(() => {
-                    const draft = readKidJoinDraft();
-                    const name = teacherCallName(draft?.teacherDisplayName);
-                    return name
-                      ? t("practiceTeacherOnWay", { name })
-                      : t("practiceTeacherOnWayGeneric");
-                  })()}
-                </p>
-              ) : null}
               {submitError ? (
                 <p
                   className="mb-3 w-full rounded-xl border border-red-400/50 bg-red-950/60 px-3 py-2 text-sm text-red-100"
@@ -410,15 +461,7 @@ function OefenenInner() {
                             onClick={() => void sendHelpRequest()}
                             className="mt-3 w-full rounded-2xl bg-amber-400 py-3 font-black text-slate-950 hover:bg-amber-300 disabled:opacity-50"
                           >
-                            {helpSending
-                              ? t("practiceHelpSending")
-                              : (() => {
-                                  const draft = readKidJoinDraft();
-                                  const name = teacherCallName(draft?.teacherDisplayName);
-                                  return name
-                                    ? t("practiceAskHelp", { name })
-                                    : t("practiceAskHelpGeneric");
-                                })()}
+                            {helpSending ? t("practiceHelpSending") : teacherHelpButtonLabel}
                           </button>
                         )}
                       </div>

@@ -7,6 +7,7 @@ import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { ClassLookupRow } from "@/lib/db";
 import { ensureAnonymousSession, isAnonymousSignInDisabledError } from "@/lib/kid-auth";
+import type { TeacherAddressAs } from "@/lib/kid-session";
 import { writeKidJoinDraft } from "@/lib/kid-session";
 import { getSupabase } from "@/lib/supabase/client";
 import { supabaseAuthProvidersDashboardUrl } from "@/lib/supabase/project-dashboard";
@@ -57,7 +58,7 @@ export function StudentJoinForm() {
         return;
       }
       if (rows.length === 1) {
-        await finalizeJoin(rows[0].class_id, rows[0].school_name, c, n, rows[0].teacher_name);
+        await finalizeJoin(rows[0].class_id, rows[0].school_name, c, n, rows[0].teacher_name, rows[0].teacher_address_as);
         return;
       }
       setMatches(rows);
@@ -99,7 +100,8 @@ export function StudentJoinForm() {
     schoolName: string,
     label: string,
     name: string,
-    teacherDisplayName?: string
+    teacherDisplayName?: string,
+    teacherAddressAs?: TeacherAddressAs
   ) => {
     if (!supabase) return;
     setBusy(true);
@@ -121,6 +123,8 @@ export function StudentJoinForm() {
         firstName: name,
         studentId: sid as string,
         teacherDisplayName: teacherDisplayName?.trim() || undefined,
+        teacherAddressAs:
+          teacherAddressAs === "meester" || teacherAddressAs === "juf" ? teacherAddressAs : undefined,
       });
       router.push("/missies");
     } catch (err: unknown) {
@@ -141,7 +145,8 @@ export function StudentJoinForm() {
       row?.school_name ?? school.trim(),
       classLabel.trim(),
       firstName.trim(),
-      row?.teacher_name
+      row?.teacher_name,
+      row?.teacher_address_as
     );
   };
 

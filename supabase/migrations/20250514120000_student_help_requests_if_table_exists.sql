@@ -1,23 +1,11 @@
--- Leerling vraagt hulp na vast te zitten op een som; leerkracht bevestigt via dashboard (realtime naar leerling).
--- Opnieuw uitvoeren: gebruik 20250514120000_student_help_requests_if_table_exists.sql als de tabel al bestaat.
-
-CREATE TABLE IF NOT EXISTS public.student_help_requests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_id uuid NOT NULL REFERENCES public.students (id) ON DELETE CASCADE,
-  class_id uuid NOT NULL REFERENCES public.classes (id) ON DELETE CASCADE,
-  mission_id uuid NOT NULL REFERENCES public.missions (id) ON DELETE CASCADE,
-  attempt_id uuid NOT NULL,
-  question_key text NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'on_way', 'dismissed')),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  acknowledged_at timestamptz
-);
+-- Voer dit uit als 20250511120000 faalde met "relation already exists".
+-- Slaat CREATE TABLE over; zet indexen, RLS, policies, realtime en schema-reload veilig.
 
 CREATE INDEX IF NOT EXISTS student_help_requests_class_pending_idx
   ON public.student_help_requests (class_id, status, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS student_help_requests_student_idx ON public.student_help_requests (student_id);
+CREATE INDEX IF NOT EXISTS student_help_requests_student_idx
+  ON public.student_help_requests (student_id);
 
 ALTER TABLE public.student_help_requests ENABLE ROW LEVEL SECURITY;
 
@@ -26,8 +14,6 @@ DROP POLICY IF EXISTS student_help_select_own ON public.student_help_requests;
 DROP POLICY IF EXISTS student_help_select_teacher ON public.student_help_requests;
 DROP POLICY IF EXISTS student_help_update_teacher ON public.student_help_requests;
 
--- Leerling mag eigen hulpvragen aanmaken (mission hoort bij klas van leerling).
--- Let op: in de subquery zijn s.class_id en m.class_id; daarom altijd student_help_requests.* kwalificeren.
 CREATE POLICY student_help_insert_own ON public.student_help_requests FOR INSERT TO authenticated
   WITH CHECK (
     EXISTS (
@@ -41,7 +27,6 @@ CREATE POLICY student_help_insert_own ON public.student_help_requests FOR INSERT
     )
   );
 
--- Leerling mag eigen rijen lezen (realtime status).
 CREATE POLICY student_help_select_own ON public.student_help_requests FOR SELECT TO authenticated
   USING (
     student_help_requests.student_id IN (
@@ -49,7 +34,6 @@ CREATE POLICY student_help_select_own ON public.student_help_requests FOR SELECT
     )
   );
 
--- Leerkracht: alle hulpvragen voor eigen klassen.
 CREATE POLICY student_help_select_teacher ON public.student_help_requests FOR SELECT TO authenticated
   USING (
     student_help_requests.class_id IN (
@@ -59,7 +43,6 @@ CREATE POLICY student_help_select_teacher ON public.student_help_requests FOR SE
     )
   );
 
--- Alleen leerkracht mag status zetten (o.a. on_way).
 CREATE POLICY student_help_update_teacher ON public.student_help_requests FOR UPDATE TO authenticated
   USING (
     student_help_requests.class_id IN (

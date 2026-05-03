@@ -1,5 +1,14 @@
 const STORAGE_KEY = "wiskunde_kid_join_v2";
 
+export type TeacherAddressAs = "meester" | "juf";
+
+/** Eerste woord van de weergavenaam (voornaam voor leerlingen). */
+export function teacherCallName(display?: string): string {
+  const s = (display ?? "").trim();
+  if (!s) return "";
+  return s.split(/\s+/)[0] ?? s;
+}
+
 export type MissionCompletionEntry = {
   successPct: number;
   completedAt: string;
@@ -13,6 +22,8 @@ export type KidJoinDraft = {
   studentId: string;
   /** Van find_classes (teacher_name); gebruikt voor hulpteksten tijdens oefenen. */
   teacherDisplayName?: string;
+  /** Van find_classes (teacher_address_as). */
+  teacherAddressAs?: TeacherAddressAs;
   /** Set on intro when starting a mission practice run */
   activeMissionAttempt?: { missionId: string; attemptId: string };
   /** Last finished run per mission (used on /missies) */
@@ -45,6 +56,7 @@ export function recordMissionCompletion(
     firstName: draft.firstName,
     studentId: draft.studentId,
     teacherDisplayName: draft.teacherDisplayName,
+    teacherAddressAs: draft.teacherAddressAs,
     missionCompletions: {
       ...(draft.missionCompletions ?? {}),
       [missionId]: { successPct, completedAt: new Date().toISOString() },

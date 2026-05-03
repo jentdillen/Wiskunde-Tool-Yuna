@@ -173,6 +173,7 @@ export function TeacherDashboard() {
   const [teacherEmail, setTeacherEmail] = useState<string | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
+  const [editAddressAs, setEditAddressAs] = useState<"meester" | "juf">("juf");
   const [editSchool, setEditSchool] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editPasswordConfirm, setEditPasswordConfirm] = useState("");
@@ -582,6 +583,7 @@ export function TeacherDashboard() {
   const openAccountEdit = () => {
     setEditEmail(teacherEmail ?? "");
     setEditFullName(profile?.full_name ?? "");
+    setEditAddressAs(profile?.address_as === "meester" ? "meester" : "juf");
     setEditSchool(profile?.school_name ?? "");
     setEditPassword("");
     setEditPasswordConfirm("");
@@ -620,11 +622,13 @@ export function TeacherDashboard() {
       }
     }
 
+    const addr: "meester" | "juf" = editAddressAs === "meester" ? "meester" : "juf";
+
     setAccountSaveBusy(true);
     try {
       const { error: pu } = await supabase
         .from("teacher_profiles")
-        .update({ full_name: nameTrim, school_name: schoolTrim })
+        .update({ full_name: nameTrim, school_name: schoolTrim, address_as: addr })
         .eq("id", profile.id);
       if (pu) throw pu;
 
@@ -644,6 +648,7 @@ export function TeacherDashboard() {
         ...profile,
         full_name: nameTrim,
         school_name: schoolTrim,
+        address_as: addr,
       });
       setEditPassword("");
       setEditPasswordConfirm("");
@@ -1200,6 +1205,12 @@ export function TeacherDashboard() {
                     <dd className="mt-1 font-semibold text-slate-900">{profile?.full_name?.trim() || "—"}</dd>
                   </div>
                   <div>
+                    <dt className="font-bold text-slate-500">{t("teacherAddressAsLabel")}</dt>
+                    <dd className="mt-1 font-semibold text-slate-900">
+                      {profile?.address_as === "meester" ? t("teacherAddressMeester") : t("teacherAddressJuf")}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="font-bold text-slate-500">{t("joinSchool")}</dt>
                     <dd className="mt-1 font-semibold text-slate-900">{profile?.school_name?.trim() || "—"}</dd>
                   </div>
@@ -1259,6 +1270,32 @@ export function TeacherDashboard() {
                     onChange={(e) => setEditFullName(e.target.value)}
                   />
                 </div>
+                <fieldset>
+                  <legend className="block text-sm font-bold text-slate-600">{t("teacherAddressAsLabel")}</legend>
+                  <p className="mt-1 text-xs text-slate-500">{t("teacherAddressAsHint")}</p>
+                  <div className="mt-2 flex flex-wrap gap-4">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                      <input
+                        type="radio"
+                        name="editAddressAs"
+                        className="h-4 w-4"
+                        checked={editAddressAs === "meester"}
+                        onChange={() => setEditAddressAs("meester")}
+                      />
+                      {t("teacherAddressMeester")}
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                      <input
+                        type="radio"
+                        name="editAddressAs"
+                        className="h-4 w-4"
+                        checked={editAddressAs === "juf"}
+                        onChange={() => setEditAddressAs("juf")}
+                      />
+                      {t("teacherAddressJuf")}
+                    </label>
+                  </div>
+                </fieldset>
                 <div>
                   <label className="block text-sm font-bold text-slate-600">{t("joinSchool")}</label>
                   <input
