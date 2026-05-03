@@ -23,6 +23,14 @@ function missionProgress(correct: number, target: number): number {
   return Math.min(100, Math.floor((correct / target) * 100));
 }
 
+const WRONG_BEFORE_HELP = 4;
+
+function teacherCallName(display?: string): string {
+  const s = (display ?? "").trim();
+  if (!s) return "";
+  return s.split(/\s+/)[0] ?? s;
+}
+
 function OefenenInner() {
   const { t } = useLocale();
   const router = useRouter();
@@ -43,6 +51,11 @@ function OefenenInner() {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [missionComplete, setMissionComplete] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [wrongStreak, setWrongStreak] = useState(0);
+  const [helpRequestId, setHelpRequestId] = useState<string | null>(null);
+  const [helpSentForQuestionKey, setHelpSentForQuestionKey] = useState<string | null>(null);
+  const [teacherOnWay, setTeacherOnWay] = useState(false);
+  const [helpSending, setHelpSending] = useState(false);
 
   const targetCorrect = mission?.target_correct ?? 20;
   const progress = missionProgress(correct, targetCorrect);
@@ -60,7 +73,87 @@ function OefenenInner() {
     setAnswerInput("");
     setFeedback("idle");
     setSubmitError(null);
+    setWrongStreak(0);
+    setHelpRequestId(null);
+    setHelpSentForQuestionKey(null);
+    setTeacherOnWay(false);
+    setHelpSending(false);
   }, []);
+
+  const questionKey = useMemo(
+    () => (question ? `${question.a}|${question.b}|${question.op}` : ""),
+    [question]
+  );
+
+  useEffect(() => {
+    if (!supabase || !helpRequestId) return;
+    const channel = supabase
+      .channel(`student-help-${helpRequestId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "student_help_requests",
+          filter: `id=eq.${helpRequestId}`,
+        },
+        (payload) => {
+          const row = payload.new as { status?: string };
+          if (row.status === "on_way") setTeacherOnWay(true);
+        }
+      )
+      .subscribe();
+    void supabase
+      .from("student_help_requests")
+      .select("status")
+      .eq("id", helpRequestId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.status === "on_way") setTeacherOnWay(true);
+      });
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [supabase, helpRequestId]);
+
+  const sendHelpRequest = useCallback(async () => {
+    if (!supabase || !mission || !studentId || !attemptId || !question) return;
+    const draft = readKidJoinDraft();
+    if (!draft) return;
+    const qk = `${question.a}|${question.b}|${question.op}`;
+    if (helpSentForQuestionKey === qk && helpRequestId) return;
+    setHelpSending(true);
+    setSubmitError(null);
+    const { data, error } = await supabase
+      .from("student_help_requests")
+      .insert({
+        student_id: studentId,
+        class_id: draft.classId,
+        mission_id: mission.id,
+        attempt_id: attemptId,
+        question_key: qk,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+    setHelpSending(false);
+    if (error) {
+      setSubmitError(error.message);
+      return;
+    }
+    if (data?.id) {
+      setHelpRequestId(data.id as string);
+      setHelpSentForQuestionKey(qk);
+    }
+  }, [
+    supabase,
+    mission,
+    studentId,
+    attemptId,
+    question,
+    helpSentForQuestionKey,
+    helpRequestId,
+  ]);
 
   useEffect(() => {
     if (!supabase || !missionId) return;
@@ -178,6 +271,7 @@ function OefenenInner() {
         }, 650);
       }
     } else {
+      setWrongStreak((w) => w + 1);
       setFeedback("wrong");
     }
   };
@@ -230,6 +324,20 @@ function OefenenInner() {
             </div>
 
             <div className="flex w-full max-w-md flex-1 flex-col items-center text-center">
+              {teacherOnWay ? (
+                <p
+                  className="mb-3 w-full rounded-xl border border-emerald-400/50 bg-emerald-950/50 px-4 py-3 text-sm font-bold text-emerald-100"
+                  role="status"
+                >
+                  {(() => {
+                    const draft = readKidJoinDraft();
+                    const name = teacherCallName(draft?.teacherDisplayName);
+                    return name
+                      ? t("practiceTeacherOnWay", { name })
+                      : t("practiceTeacherOnWayGeneric");
+                  })()}
+                </p>
+              ) : null}
               {submitError ? (
                 <p
                   className="mb-3 w-full rounded-xl border border-red-400/50 bg-red-950/60 px-3 py-2 text-sm text-red-100"
@@ -277,12 +385,45 @@ function OefenenInner() {
                     </button>
                   </>
                 ) : (
-                  <button
-                    type="submit"
-                    className="w-full rounded-2xl bg-slate-700 py-4 text-lg font-bold text-white hover:bg-slate-600"
-                  >
-                    OK
-                  </button>
+                  <div className="w-full space-y-3">
+                    <button
+                      type="submit"
+                      className="w-full rounded-2xl bg-slate-700 py-4 text-lg font-bold text-white hover:bg-slate-600"
+                    >
+                      OK
+                    </button>
+                    {wrongStreak >= WRONG_BEFORE_HELP ? (
+                      <div className="rounded-2xl border border-amber-400/40 bg-amber-950/35 px-4 py-3 text-left text-sm text-amber-50">
+                        <p className="font-semibold text-amber-100">{t("practiceHelpAfterWrong")}</p>
+                        {helpSentForQuestionKey === questionKey ? (
+                          <p className="mt-2 text-amber-100/95">
+                            {teacherOnWay ? null : (
+                              <>
+                                {t("practiceHelpSent")} {t("practiceHelpWait")}
+                              </>
+                            )}
+                          </p>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={helpSending}
+                            onClick={() => void sendHelpRequest()}
+                            className="mt-3 w-full rounded-2xl bg-amber-400 py-3 font-black text-slate-950 hover:bg-amber-300 disabled:opacity-50"
+                          >
+                            {helpSending
+                              ? t("practiceHelpSending")
+                              : (() => {
+                                  const draft = readKidJoinDraft();
+                                  const name = teacherCallName(draft?.teacherDisplayName);
+                                  return name
+                                    ? t("practiceAskHelp", { name })
+                                    : t("practiceAskHelpGeneric");
+                                })()}
+                          </button>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 )}
               </form>
             </div>

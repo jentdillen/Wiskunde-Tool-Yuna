@@ -11,6 +11,8 @@ export type KidJoinDraft = {
   schoolName: string;
   firstName: string;
   studentId: string;
+  /** Van find_classes (teacher_name); gebruikt voor hulpteksten tijdens oefenen. */
+  teacherDisplayName?: string;
   /** Set on intro when starting a mission practice run */
   activeMissionAttempt?: { missionId: string; attemptId: string };
   /** Last finished run per mission (used on /missies) */
@@ -42,6 +44,7 @@ export function recordMissionCompletion(
     schoolName: draft.schoolName,
     firstName: draft.firstName,
     studentId: draft.studentId,
+    teacherDisplayName: draft.teacherDisplayName,
     missionCompletions: {
       ...(draft.missionCompletions ?? {}),
       [missionId]: { successPct, completedAt: new Date().toISOString() },

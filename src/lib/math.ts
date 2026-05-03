@@ -66,3 +66,14 @@ export function generateQuestion(max: number, mode: OperationMode): Question {
 export function formatQuestion(q: Question): string {
   return `${q.a} ${q.op} ${q.b} = ?`;
 }
+
+/** Decode `a|op|b` from help-request storage for display. */
+export function formatQuestionKeyLabel(key: string): string {
+  const parts = key.split("|");
+  if (parts.length !== 3) return key;
+  const a = Number(parts[0]);
+  const b = Number(parts[1]);
+  const op = parts[2] as OpSymbol;
+  if (Number.isNaN(a) || Number.isNaN(b) || !["+", "-", "*", "/"].includes(op)) return key;
+  return formatQuestion({ a, b, op, answer: 0 });
+}

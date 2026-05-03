@@ -54,3 +54,16 @@ export type ClassLookupRow = {
   school_name: string;
   teacher_name: string;
 };
+
+export type StudentHelpRequestRow = {
+  id: string;
+  student_id: string;
+  class_id: string;
+  mission_id: string;
+  attempt_id: string;
+  question_key: string;
+  status: "pending" | "on_way" | "dismissed";
+  created_at: string;
+  updated_at: string;
+  acknowledged_at: string | null;
+};

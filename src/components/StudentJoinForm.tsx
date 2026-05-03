@@ -57,7 +57,7 @@ export function StudentJoinForm() {
         return;
       }
       if (rows.length === 1) {
-        await finalizeJoin(rows[0].class_id, rows[0].school_name, c, n);
+        await finalizeJoin(rows[0].class_id, rows[0].school_name, c, n, rows[0].teacher_name);
         return;
       }
       setMatches(rows);
@@ -94,7 +94,13 @@ export function StudentJoinForm() {
     return msg;
   };
 
-  const finalizeJoin = async (classId: string, schoolName: string, label: string, name: string) => {
+  const finalizeJoin = async (
+    classId: string,
+    schoolName: string,
+    label: string,
+    name: string,
+    teacherDisplayName?: string
+  ) => {
     if (!supabase) return;
     setBusy(true);
     setError(null);
@@ -114,6 +120,7 @@ export function StudentJoinForm() {
         schoolName,
         firstName: name,
         studentId: sid as string,
+        teacherDisplayName: teacherDisplayName?.trim() || undefined,
       });
       router.push("/missies");
     } catch (err: unknown) {
@@ -133,7 +140,8 @@ export function StudentJoinForm() {
       pickedClassId,
       row?.school_name ?? school.trim(),
       classLabel.trim(),
-      firstName.trim()
+      firstName.trim(),
+      row?.teacher_name
     );
   };
 

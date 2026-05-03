@@ -6,7 +6,7 @@ import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { AnswerRow, ClassRow, MissionRow, StudentRow, TeacherProfileRow } from "@/lib/db";
 import { getSupabase } from "@/lib/supabase/client";
-import { formatQuestion, type OperationMode, type Question } from "@/lib/math";
+import { formatQuestion, formatQuestionKeyLabel, type OperationMode, type Question } from "@/lib/math";
 
 type AttemptStat = {
   key: string;
@@ -84,6 +84,15 @@ type StudentMissionSummaryRow = {
 };
 
 type ModalMissionCol = { id: string; title: string };
+
+type PendingHelpItem = {
+  id: string;
+  created_at: string;
+  classLabel: string;
+  studentName: string;
+  missionTitle: string;
+  questionKey: string;
+};
 
 /** Latest attempt per (student, mission) by last answer time. */
 function buildLatestAttemptMatrix(
@@ -186,6 +195,98 @@ export function TeacherDashboard() {
   >([]);
   const [allMissionsOverviewLoading, setAllMissionsOverviewLoading] = useState(false);
   const [missionResultsFilterId, setMissionResultsFilterId] = useState<string | null>(null);
+  const [pendingHelpRequests, setPendingHelpRequests] = useState<PendingHelpItem[]>([]);
+  const [helpAckBusyId, setHelpAckBusyId] = useState<string | null>(null);
+
+  const loadPendingHelpRequests = useCallback(async () => {
+    if (!supabase || classes.length === 0) {
+      setPendingHelpRequests([]);
+      return;
+    }
+    const classIds = classes.map((c) => c.id);
+    const { data, error } = await supabase
+      .from("student_help_requests")
+      .select(
+        "id, created_at, question_key, class_id, students ( first_name ), missions ( title ), classes ( label )"
+      )
+      .eq("status", "pending")
+      .in("class_id", classIds)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const pickStr = (v: unknown, field: string): string => {
+      if (v == null) return "—";
+      const one = Array.isArray(v) ? v[0] : v;
+      if (!one || typeof one !== "object") return "—";
+      const val = (one as Record<string, unknown>)[field];
+      return typeof val === "string" && val ? val : "—";
+    };
+    setPendingHelpRequests(
+      (data || []).map((row: Record<string, unknown>) => ({
+        id: String(row.id ?? ""),
+        created_at: String(row.created_at ?? ""),
+        classLabel: pickStr(row.classes, "label"),
+        studentName: pickStr(row.students, "first_name"),
+        missionTitle: pickStr(row.missions, "title"),
+        questionKey: String(row.question_key ?? ""),
+      }))
+    );
+  }, [supabase, classes]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadPendingHelpRequests();
+    });
+  }, [loadPendingHelpRequests]);
+
+  useEffect(() => {
+    if (!supabase || classes.length === 0) return;
+    const classSet = new Set(classes.map((c) => c.id));
+    const channel = supabase
+      .channel("teacher-student-help")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "student_help_requests" },
+        (payload) => {
+          const cid = (payload.new as { class_id?: string }).class_id;
+          if (cid && classSet.has(cid)) void loadPendingHelpRequests();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "student_help_requests" },
+        (payload) => {
+          const cid = (payload.new as { class_id?: string }).class_id;
+          if (cid && classSet.has(cid)) void loadPendingHelpRequests();
+        }
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [supabase, classes, loadPendingHelpRequests]);
+
+  const acknowledgeHelpRequest = async (id: string) => {
+    if (!supabase) return;
+    setHelpAckBusyId(id);
+    try {
+      const { error } = await supabase
+        .from("student_help_requests")
+        .update({
+          status: "on_way",
+          acknowledged_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      await loadPendingHelpRequests();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setHelpAckBusyId(null);
+    }
+  };
 
   const loadProfileAndClasses = useCallback(async () => {
     if (!supabase) return;
@@ -783,6 +884,42 @@ export function TeacherDashboard() {
           </button>
         </div>
       </header>
+
+      {pendingHelpRequests.length > 0 ? (
+        <div
+          className="rounded-2xl border-2 border-amber-400 bg-amber-50 px-4 py-4 shadow-lg sm:px-5"
+          role="region"
+          aria-label={t("teacherHelpAlertsTitle")}
+        >
+          <h2 className="text-lg font-black text-amber-950">{t("teacherHelpAlertsTitle")}</h2>
+          <p className="mt-1 text-sm text-amber-900/90">{t("teacherHelpAlertsSub")}</p>
+          <ul className="mt-3 space-y-3">
+            {pendingHelpRequests.map((h) => (
+              <li
+                key={h.id}
+                className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="text-sm font-semibold text-slate-900">
+                  {t("teacherHelpStudentLine", {
+                    student: h.studentName,
+                    classLabel: h.classLabel,
+                    mission: h.missionTitle,
+                    question: formatQuestionKeyLabel(h.questionKey),
+                  })}
+                </p>
+                <button
+                  type="button"
+                  disabled={helpAckBusyId === h.id}
+                  onClick={() => void acknowledgeHelpRequest(h.id)}
+                  className="shrink-0 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-amber-950 hover:bg-amber-400 disabled:opacity-50"
+                >
+                  {helpAckBusyId === h.id ? t("loading") : t("teacherHelpAck")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {answersModalOpen ? (
         <div
