@@ -53,8 +53,8 @@ export default function TeacherPage() {
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-violet-50 via-white to-indigo-50 px-4 py-4 sm:py-6">
-      <div className="absolute right-4 top-4 z-10">
+    <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-violet-50 via-white to-indigo-50 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:py-6">
+      <div className="mx-auto mb-3 flex w-full max-w-4xl justify-end">
         <LanguageToggle />
       </div>
       <div className="mx-auto w-full max-w-4xl">

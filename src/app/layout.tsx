@@ -24,6 +24,19 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} min-h-dvh bg-slate-950 font-sans text-slate-900 antialiased`}
       >
+        <noscript>
+          <div
+            style={{
+              padding: 24,
+              background: "#fffbeb",
+              color: "#78350f",
+              borderBottom: "2px solid #f59e0b",
+              fontFamily: "system-ui, sans-serif",
+            }}
+          >
+            <strong>JavaScript staat uit.</strong> Zet JavaScript aan om Wiskunde Tool te gebruiken.
+          </div>
+        </noscript>
         <LocaleProvider>
           <div className="flex min-h-dvh flex-col">{children}</div>
         </LocaleProvider>

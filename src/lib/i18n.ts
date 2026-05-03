@@ -54,6 +54,8 @@ export const translations = {
     joinStepName: "Stap 3",
     startPlaying: "Beginnen",
     loading: "Laden…",
+    loadingStuckHint:
+      "Zie je lang alleen een donker scherm? Wacht even, vernieuw de pagina, of controleer of JavaScript aan staat (geen strikte blokker op school-WiFi).",
     invalidCode: "Geen actieve sessie met deze code.",
     missionsTitle: "Kies een missie",
     missionsSub: "Tik op een missie om te starten.",
@@ -248,6 +250,8 @@ export const translations = {
     joinStepName: "Step 3",
     startPlaying: "Start",
     loading: "Loading…",
+    loadingStuckHint:
+      "If this dark screen stays empty for a long time, refresh, or check that JavaScript is enabled and the network allows the app to load.",
     invalidCode: "No active session with this code.",
     missionsTitle: "Choose a mission",
     missionsSub: "Tap a mission to start.",

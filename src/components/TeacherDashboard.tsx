@@ -734,15 +734,15 @@ export function TeacherDashboard() {
 
   return (
     <div className="w-full max-w-4xl space-y-5 sm:space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-indigo-950">{t("teacherHeading")}</h1>
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-black text-indigo-950 sm:text-3xl">{t("teacherHeading")}</h1>
           <p className="text-slate-600">
             {profile?.full_name ? `${profile.full_name} · ` : ""}
             {profile?.school_name || "—"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           <button
             type="button"
             disabled={classes.length === 0}
@@ -757,27 +757,27 @@ export function TeacherDashboard() {
               setAnswersDetailError(null);
               setAnswersModalOpen(true);
             }}
-            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {t("teacherStudentAnswersButton")}
           </button>
           <Link
             href="/"
-            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow ring-1 ring-slate-200 hover:bg-indigo-50"
+            className="flex w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-center text-sm font-semibold text-indigo-700 shadow ring-1 ring-slate-200 hover:bg-indigo-50 sm:w-auto"
           >
             {t("kidHome")}
           </Link>
           <button
             type="button"
             onClick={() => setAccountModalOpen(true)}
-            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow ring-1 ring-slate-200 hover:bg-slate-50"
+            className="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow ring-1 ring-slate-200 hover:bg-slate-50 sm:w-auto"
           >
             {t("accountInfoButton")}
           </button>
           <button
             type="button"
             onClick={() => void signOut()}
-            className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+            className="w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 sm:w-auto"
           >
             {t("teacherLogout")}
           </button>
@@ -811,8 +811,8 @@ export function TeacherDashboard() {
               ) : null}
 
               {answersModalStep === "pick-class" ? (
-                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-                  <div className="min-w-[12rem] flex-1">
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
+                  <div className="min-w-0 flex-1 sm:min-w-[12rem]">
                     <label
                       htmlFor="answers-class-filter"
                       className="block text-xs font-bold uppercase tracking-wide text-slate-500"
@@ -843,7 +843,7 @@ export function TeacherDashboard() {
                         if (ok) setAnswersModalStep("matrix");
                       })();
                     }}
-                    className="rounded-xl bg-violet-600 px-6 py-3 font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+                    className="w-full rounded-xl bg-violet-600 px-6 py-3 font-bold text-white hover:bg-violet-700 disabled:opacity-50 sm:w-auto"
                   >
                     {answersDetailLoading ? t("loading") : t("teacherAnswersShowOverview")}
                   </button>
@@ -851,15 +851,15 @@ export function TeacherDashboard() {
               ) : null}
 
               {answersModalStep === "matrix" ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
                   <p className="text-sm font-bold text-slate-800">
                     {classes.find((c) => c.id === answersModalClassId)?.label ?? ""}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                     <button
                       type="button"
                       onClick={() => setAnswersModalStep("pick-class")}
-                      className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50"
+                      className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 sm:w-auto"
                     >
                       {t("teacherAnswersChangeClass")}
                     </button>
@@ -867,7 +867,7 @@ export function TeacherDashboard() {
                       type="button"
                       disabled={!answersModalClassId || answersDetailLoading}
                       onClick={() => answersModalClassId && void loadAnswersClassSummary(answersModalClassId)}
-                      className="rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
+                      className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-100 disabled:opacity-50 sm:w-auto"
                     >
                       {answersDetailLoading ? t("loading") : t("teacherAnswersRefresh")}
                     </button>
@@ -1220,11 +1220,11 @@ export function TeacherDashboard() {
         <p className="mt-2 text-xs text-slate-500">{t("classMaxStudentsHint")}</p>
         <ul className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {classes.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-stretch gap-2">
+            <li key={c.id} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-stretch">
               <button
                 type="button"
                 onClick={() => setSelectedClassId(c.id)}
-                className={`rounded-2xl px-4 py-2.5 text-sm font-bold shadow ${
+                className={`w-full rounded-2xl px-4 py-2.5 text-left text-sm font-bold shadow sm:w-auto ${
                   selectedClassId === c.id
                     ? "bg-violet-600 text-white"
                     : "bg-slate-100 text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50"
@@ -1239,7 +1239,7 @@ export function TeacherDashboard() {
                 type="button"
                 disabled={busy || !profile}
                 onClick={() => void deleteClass(c)}
-                className="rounded-2xl border border-red-200 bg-white px-3 py-2.5 text-xs font-bold text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-50"
+                className="w-full shrink-0 rounded-2xl border border-red-200 bg-white px-3 py-2.5 text-xs font-bold text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-50 sm:w-auto"
               >
                 {t("teacherDeleteClass")}
               </button>
@@ -1369,19 +1369,19 @@ export function TeacherDashboard() {
             id="teacher-results-section"
             className="scroll-mt-4 rounded-3xl border-2 border-violet-100 bg-white p-4 shadow-xl sm:p-5"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
               <h2 className="text-xl font-black text-slate-900">{t("teacherResults")}</h2>
               <button
                 type="button"
                 onClick={exportCsv}
-                className="rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white shadow hover:bg-emerald-700"
+                className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-bold text-white shadow hover:bg-emerald-700 sm:w-auto"
               >
                 {t("exportCsv")}
               </button>
             </div>
             {missionFilterActive ? (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950 ring-1 ring-amber-200">
-                <span>
+              <div className="mt-3 flex flex-col gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950 ring-1 ring-amber-200 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <span className="min-w-0">
                   {t("teacherResultsFilteredBanner", {
                     mission: missions.find((x) => x.id === missionFilterActive)?.title ?? "",
                   })}
@@ -1389,7 +1389,7 @@ export function TeacherDashboard() {
                 <button
                   type="button"
                   onClick={() => setMissionResultsFilterId(null)}
-                  className="shrink-0 font-bold text-violet-700 underline underline-offset-2 hover:text-violet-900"
+                  className="shrink-0 self-start font-bold text-violet-700 underline underline-offset-2 hover:text-violet-900 sm:self-center"
                 >
                   {t("teacherResultsShowAll")}
                 </button>

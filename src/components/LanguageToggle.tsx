@@ -16,7 +16,7 @@ export function LanguageToggle({ variant = "light" }: { variant?: "light" | "dar
       <button
         type="button"
         onClick={() => setLocale("nl")}
-        className={`rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+        className={`min-h-10 min-w-[2.75rem] rounded-full px-3 py-2 text-sm font-semibold transition-colors sm:min-h-0 sm:min-w-0 sm:py-1 ${
           locale === "nl"
             ? "bg-cyan-500 text-slate-950"
             : isDark
@@ -30,7 +30,7 @@ export function LanguageToggle({ variant = "light" }: { variant?: "light" | "dar
       <button
         type="button"
         onClick={() => setLocale("en")}
-        className={`rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+        className={`min-h-10 min-w-[2.75rem] rounded-full px-3 py-2 text-sm font-semibold transition-colors sm:min-h-0 sm:min-w-0 sm:py-1 ${
           locale === "en"
             ? "bg-cyan-500 text-slate-950"
             : isDark

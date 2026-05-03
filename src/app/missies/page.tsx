@@ -59,8 +59,11 @@ export default function MissiesPage() {
 
   if (missions === null && !loadError) {
     return (
-      <div className="flex min-h-dvh flex-1 items-center justify-center bg-slate-950 px-4 text-cyan-200">
-        <p>{t("loading")}</p>
+      <div className="flex min-h-dvh flex-1 flex-col items-center justify-center gap-3 bg-slate-950 px-4">
+        <p className="text-lg font-bold text-white" role="status" aria-live="polite">
+          {t("loading")}
+        </p>
+        <p className="max-w-sm text-center text-sm text-cyan-200/90">{t("loadingStuckHint")}</p>
       </div>
     );
   }
@@ -68,13 +71,13 @@ export default function MissiesPage() {
   const kidDraft = readKidJoinDraft();
 
   return (
-    <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-8 pt-4">
+    <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.08),transparent_55%)]" />
-      <div className="absolute right-4 top-4 z-10">
+      <div className="relative z-20 flex w-full justify-end pb-2">
         <LanguageToggle variant="dark" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-lg pt-2">
+      <div className="relative z-10 mx-auto w-full max-w-lg pt-0">
         <h1 className="text-center text-2xl font-black text-white sm:text-3xl">{t("missionsTitle")}</h1>
         <p className="mx-auto mt-2 max-w-md text-center text-sm text-cyan-100/85">{t("missionsSub")}</p>
 

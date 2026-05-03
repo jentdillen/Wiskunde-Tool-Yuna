@@ -51,11 +51,12 @@ export default function TeacherSignupPage() {
   if (!supabase) return <SetupRequired />;
 
   return (
-    <div className="relative flex min-h-dvh flex-1 flex-col items-center justify-center bg-gradient-to-b from-violet-50 to-indigo-50 px-4 py-8">
-      <div className="absolute right-4 top-4">
+    <div className="flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-violet-50 to-indigo-50 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div className="mx-auto flex w-full max-w-md justify-end pb-2">
         <LanguageToggle />
       </div>
-      <div className="w-full max-w-md rounded-3xl border-2 border-indigo-100 bg-white p-6 shadow-xl">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
+        <div className="w-full rounded-3xl border-2 border-indigo-100 bg-white p-6 shadow-xl">
         <h1 className="text-2xl font-black text-indigo-950">{t("teacherSignup")}</h1>
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         {info && <p className="mt-3 text-sm text-emerald-700">{info}</p>}
@@ -118,6 +119,7 @@ export default function TeacherSignupPage() {
             {t("haveAccount")}
           </Link>
         </p>
+        </div>
       </div>
     </div>
   );

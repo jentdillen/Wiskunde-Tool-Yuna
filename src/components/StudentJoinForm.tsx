@@ -192,18 +192,18 @@ export function StudentJoinForm() {
               </li>
             ))}
           </ul>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() => resetDisambiguation()}
-              className="rounded-2xl border border-slate-500 px-4 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800"
+              className="w-full rounded-2xl border border-slate-500 px-4 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800 sm:w-auto"
             >
               {t("back")}
             </button>
             <button
               type="submit"
               disabled={busy || !pickedClassId}
-              className="flex-1 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 py-3 font-black text-slate-950 disabled:opacity-50"
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 py-3 font-black text-slate-950 disabled:opacity-50 sm:flex-1 sm:min-w-[12rem]"
             >
               {busy ? t("loading") : t("joinContinue")}
             </button>
