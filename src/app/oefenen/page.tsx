@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AstronautCharacter } from "@/components/astronauts/AstronautCharacter";
 import { SpeechBubble } from "@/components/astronauts/SpeechBubble";
 import { SetupRequired } from "@/components/SetupRequired";
@@ -18,7 +18,8 @@ import {
 import {
   type OperationMode,
   formatQuestion,
-  generateQuestion,
+  generateQuestionUnique,
+  questionDedupeKey,
   type Question,
 } from "@/lib/math";
 import { SpacePracticeBackdrop } from "@/components/SpaceBackdrop";
@@ -55,7 +56,12 @@ function OefenenInner() {
   const [helpRequestId, setHelpRequestId] = useState<string | null>(null);
   const [helpSentForQuestionKey, setHelpSentForQuestionKey] = useState<string | null>(null);
   const [teacherOnWay, setTeacherOnWay] = useState(false);
+  /** Overlay sluiten zodat kind verder kan; status blijft on_way op de server. */
+  const [teacherOnWayBannerDismissed, setTeacherOnWayBannerDismissed] = useState(false);
   const [helpSending, setHelpSending] = useState(false);
+
+  /** Binnen één missie geen identieke (a,b,op) herhalen tot het reservoir op is. */
+  const usedQuestionKeysRef = useRef<Set<string>>(new Set());
 
   const targetCorrect = mission?.target_correct ?? 20;
   const progress = missionProgress(correct, targetCorrect);
@@ -66,9 +72,10 @@ function OefenenInner() {
   if (feedback === "wrong") coachText = t("coachEncourage");
   if (missionComplete) coachText = t("missionCompleteBody");
 
-  const startQuestion = useCallback((m: MissionRow) => {
+  const startQuestion = useCallback((m: MissionRow, completedQuestionKey?: string | null) => {
+    if (completedQuestionKey) usedQuestionKeysRef.current.add(completedQuestionKey);
     const mode = (m.operation_mode || "both") as OperationMode;
-    const q = generateQuestion(m.max_number, mode);
+    const q = generateQuestionUnique(m.max_number, mode, usedQuestionKeysRef.current);
     setQuestion(q);
     setAnswerInput("");
     setFeedback("idle");
@@ -77,11 +84,12 @@ function OefenenInner() {
     setHelpRequestId(null);
     setHelpSentForQuestionKey(null);
     setTeacherOnWay(false);
+    setTeacherOnWayBannerDismissed(false);
     setHelpSending(false);
   }, []);
 
   const questionKey = useMemo(
-    () => (question ? `${question.a}|${question.b}|${question.op}` : ""),
+    () => (question ? questionDedupeKey(question) : ""),
     [question]
   );
 
@@ -208,6 +216,7 @@ function OefenenInner() {
       setMission(m);
       setAttemptId(att.attemptId);
       setStudentId(draft.studentId);
+      usedQuestionKeysRef.current = new Set();
       startQuestion(m);
       setReady(true);
     })();
@@ -285,7 +294,7 @@ function OefenenInner() {
         }
       } else {
         window.setTimeout(() => {
-          startQuestion(mission);
+          startQuestion(mission, questionDedupeKey(question));
         }, 650);
       }
     } else {
@@ -334,12 +343,14 @@ function OefenenInner() {
     <div className="relative flex min-h-dvh flex-1 flex-col bg-slate-950">
       <SpacePracticeBackdrop />
 
-      {teacherOnWay && !missionComplete ? (
+      {teacherOnWay && !teacherOnWayBannerDismissed && !missionComplete ? (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
           role="alertdialog"
+          aria-modal="true"
           aria-live="assertive"
           aria-labelledby="teacher-on-way-title"
+          aria-describedby="teacher-on-way-sub"
         >
           <div className="w-full max-w-lg rounded-[2rem] border-[6px] border-emerald-400 bg-gradient-to-b from-emerald-500 via-emerald-700 to-emerald-950 p-8 shadow-[0_0_0_4px_rgba(16,185,129,0.25),0_24px_80px_rgba(0,0,0,0.45)] sm:p-12">
             <p
@@ -348,9 +359,19 @@ function OefenenInner() {
             >
               {teacherOnWayCardTitle}
             </p>
-            <p className="mt-6 text-center text-xl font-bold text-emerald-50 sm:text-2xl md:text-3xl">
+            <p
+              id="teacher-on-way-sub"
+              className="mt-6 text-center text-xl font-bold text-emerald-50 sm:text-2xl md:text-3xl"
+            >
               {t("practiceTeacherOnWayCardSub")}
             </p>
+            <button
+              type="button"
+              onClick={() => setTeacherOnWayBannerDismissed(true)}
+              className="mt-8 w-full rounded-2xl border-4 border-white/90 bg-white py-4 text-xl font-black tracking-wide text-emerald-900 shadow-[0_8px_0_rgb(6,78,59),0_12px_32px_rgba(0,0,0,0.35)] transition hover:brightness-105 active:translate-y-1 active:shadow-[0_4px_0_rgb(6,78,59)] sm:mt-10 sm:py-5 sm:text-2xl"
+            >
+              {t("practiceTeacherOnWayOk")}
+            </button>
           </div>
         </div>
       ) : null}
