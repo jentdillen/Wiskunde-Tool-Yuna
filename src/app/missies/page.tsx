@@ -4,11 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { MissionPlanet } from "@/components/missions/MissionPlanet";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { MissionRow } from "@/lib/db";
 import { verifyKidMatchesSession } from "@/lib/kid-auth";
 import { clearKidJoinDraft, readKidJoinDraft } from "@/lib/kid-session";
+import {
+  MISSION_DIFFICULTY_ORDER,
+  isMissionUnlockedForKid,
+  normalizeMissionDifficulty,
+  sortMissionsByDifficultyThenCreated,
+  unlockBlockedReason,
+} from "@/lib/missions";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function MissiesPage() {
@@ -47,7 +55,8 @@ export default function MissiesPage() {
         setMissions([]);
         return;
       }
-      setMissions((data || []) as MissionRow[]);
+      const sorted = sortMissionsByDifficultyThenCreated((data || []) as MissionRow[]);
+      setMissions(sorted);
     })();
 
     return () => {
@@ -69,17 +78,19 @@ export default function MissiesPage() {
   }
 
   const kidDraft = readKidJoinDraft();
+  const sorted = missions ?? [];
 
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.08),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.1),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(167,139,250,0.08),transparent_45%)]" />
       <div className="relative z-20 flex w-full justify-end pb-2">
         <LanguageToggle variant="dark" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-lg pt-0">
         <h1 className="text-center text-2xl font-black text-white sm:text-3xl">{t("missionsTitle")}</h1>
-        <p className="mx-auto mt-2 max-w-md text-center text-sm text-cyan-100/85">{t("missionsSub")}</p>
+        <p className="mx-auto mt-2 max-w-md text-center text-sm leading-snug text-cyan-100/90">{t("missionsSub")}</p>
 
         {loadError && (
           <div className="mt-4 rounded-xl border border-red-400/40 bg-red-950/50 px-4 py-3 text-center text-sm text-red-100">
@@ -91,42 +102,102 @@ export default function MissiesPage() {
           <p className="mt-8 text-center text-cyan-200/80">{t("noMissions")}</p>
         )}
 
-        <ul className="mt-6 space-y-3">
-          {(missions || []).map((m) => {
-            const done = kidDraft?.missionCompletions?.[m.id];
+        <div className="mt-6 space-y-10">
+          {MISSION_DIFFICULTY_ORDER.map((tier) => {
+            const items = sorted.filter((m) => normalizeMissionDifficulty(m.difficulty) === tier);
+            if (items.length === 0) return null;
+
+            const sectionHeading =
+              tier === "easy"
+                ? t("missionsSectionEasy")
+                : tier === "medium"
+                  ? t("missionsSectionMedium")
+                  : t("missionsSectionHard");
+            const sectionSub =
+              tier === "easy"
+                ? `${t("difficultyEasyTitle")} · ${t("difficultyEasySub")}`
+                : tier === "medium"
+                  ? `${t("difficultyMediumTitle")} · ${t("difficultyMediumSub")}`
+                  : `${t("difficultyHardTitle")} · ${t("difficultyHardSub")}`;
+
             return (
-              <li key={m.id}>
-                <Link
-                  href={`/intro?mission=${encodeURIComponent(m.id)}`}
-                  className={
-                    done
-                      ? "block rounded-2xl border-2 border-emerald-400/70 bg-emerald-950/45 px-4 py-4 text-left shadow-[0_0_28px_rgba(52,211,153,0.2)] transition hover:border-emerald-300/90 hover:bg-emerald-950/60"
-                      : "block rounded-2xl border border-cyan-500/35 bg-slate-950/80 px-4 py-4 text-left shadow-[0_0_24px_rgba(34,211,238,0.1)] transition hover:border-cyan-400/60 hover:bg-slate-900/90"
-                  }
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="text-lg font-black text-white">{m.title}</span>
-                    {done ? (
-                      <span className="rounded-full bg-emerald-500/25 px-2.5 py-0.5 text-xs font-black tabular-nums text-emerald-200">
-                        {t("missionSuccessPct", { pct: done.successPct })}
-                      </span>
-                    ) : null}
+              <section key={tier} className="space-y-4">
+                <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 shadow-[0_0_32px_rgba(0,0,0,0.25)] backdrop-blur-sm">
+                  <MissionPlanet tier={tier} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-black text-white sm:text-xl">{sectionHeading}</h2>
+                    <p className="text-xs font-semibold text-cyan-200/75">{sectionSub}</p>
                   </div>
-                  <span className="mt-1 block text-xs text-cyan-200/70">
-                    {t("rangeLabel")}: {m.max_number} · {t("modeLabel")}: {m.operation_mode}
-                    {done ? (
-                      <span className="text-emerald-200/90"> · {t("missionCompletedHint")}</span>
-                    ) : null}
-                  </span>
-                </Link>
-              </li>
+                </div>
+
+                <ul className="space-y-3">
+                  {items.map((m) => {
+                    const done = kidDraft?.missionCompletions?.[m.id];
+                    const unlocked = isMissionUnlockedForKid(m, sorted, kidDraft?.missionCompletions);
+                    const block = unlockBlockedReason(m, sorted, kidDraft?.missionCompletions);
+                    const missionTier = normalizeMissionDifficulty(m.difficulty);
+
+                    if (!unlocked) {
+                      return (
+                        <li key={m.id}>
+                          <div className="flex gap-3 rounded-2xl border border-slate-600/60 bg-slate-950/70 px-4 py-4 text-left opacity-90">
+                            <MissionPlanet tier={missionTier} size="sm" locked className="self-center" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                <span className="text-lg font-black text-slate-400">{m.title}</span>
+                                <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-[0.65rem] font-black uppercase tracking-wide text-slate-400">
+                                  {t("missionsLockedBadge")}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-snug text-slate-500">
+                                {block === "easy" ? t("missionsLockedNeedEasy") : t("missionsLockedNeedMedium")}
+                              </p>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={m.id}>
+                        <Link
+                          href={`/intro?mission=${encodeURIComponent(m.id)}`}
+                          className={
+                            done
+                              ? "flex gap-3 rounded-2xl border-2 border-emerald-400/70 bg-emerald-950/40 px-4 py-4 text-left shadow-[0_0_28px_rgba(52,211,153,0.2)] transition hover:border-emerald-300/90 hover:bg-emerald-950/55"
+                              : "flex gap-3 rounded-2xl border border-cyan-500/35 bg-slate-950/80 px-4 py-4 text-left shadow-[0_0_24px_rgba(34,211,238,0.12)] transition hover:border-cyan-400/60 hover:bg-slate-900/90"
+                          }
+                        >
+                          <MissionPlanet tier={missionTier} size="sm" className="self-center" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <span className="text-lg font-black text-white">{m.title}</span>
+                              {done ? (
+                                <span className="rounded-full bg-emerald-500/25 px-2.5 py-0.5 text-xs font-black tabular-nums text-emerald-200">
+                                  {t("missionSuccessPct", { pct: done.successPct })}
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="mt-1 block text-xs text-cyan-200/70">
+                              {t("rangeLabel")}: {m.max_number} · {t("modeLabel")}: {m.operation_mode}
+                              {done ? (
+                                <span className="text-emerald-200/90"> · {t("missionCompletedHint")}</span>
+                              ) : null}
+                            </span>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             );
           })}
-        </ul>
+        </div>
 
         <Link
           href="/"
-          className="mt-8 block text-center text-sm font-semibold text-cyan-300/90 underline-offset-4 hover:underline"
+          className="mt-10 block text-center text-sm font-semibold text-cyan-300/90 underline-offset-4 hover:underline"
         >
           {t("backHome")}
         </Link>

@@ -1,4 +1,5 @@
 import type { OperationMode } from "@/lib/math";
+import type { MissionDifficulty } from "@/lib/missions";
 
 export type TeacherProfileRow = {
   id: string;
@@ -26,8 +27,12 @@ export type MissionRow = {
   max_number: 10 | 20 | 100;
   operation_mode: OperationMode;
   target_correct: number;
+  /** easy = mini planeet, medium = grote, hard = reuze (DB default easy). */
+  difficulty?: MissionDifficulty;
   created_at: string;
 };
+
+export type { MissionDifficulty } from "@/lib/missions";
 
 export type StudentRow = {
   id: string;

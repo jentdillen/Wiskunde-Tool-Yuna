@@ -4,8 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
-import type { AnswerRow, ClassRow, MissionRow, StudentRow, TeacherProfileRow } from "@/lib/db";
+import { MissionPlanet } from "@/components/missions/MissionPlanet";
+import type { AnswerRow, ClassRow, MissionRow, MissionDifficulty, StudentRow, TeacherProfileRow } from "@/lib/db";
 import { teacherCallName } from "@/lib/kid-session";
+import {
+  difficultyOrderIndex,
+  normalizeMissionDifficulty,
+  sortMissionsByDifficultyThenCreated,
+} from "@/lib/missions";
 import { getSupabase } from "@/lib/supabase/client";
 import { formatQuestion, formatQuestionKeyLabel, type OperationMode, type Question } from "@/lib/math";
 
@@ -168,6 +174,7 @@ export function TeacherDashboard() {
   const [maxNumber, setMaxNumber] = useState<10 | 20 | 100>(20);
   const [operationMode, setOperationMode] = useState<OperationMode>("both");
   const [targetCorrect, setTargetCorrect] = useState(20);
+  const [newMissionDifficulty, setNewMissionDifficulty] = useState<MissionDifficulty>("easy");
   const [busy, setBusy] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountEditMode, setAccountEditMode] = useState(false);
@@ -384,12 +391,19 @@ export function TeacherDashboard() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       const labelById = new Map(classes.map((c) => [c.id, c.label]));
-      setAllMissionsOverview(
-        (data || []).map((row) => {
-          const m = row as MissionRow;
-          return { ...m, classLabel: labelById.get(m.class_id) ?? "—" };
-        })
-      );
+      const mapped = (data || []).map((row) => {
+        const m = row as MissionRow;
+        return { ...m, classLabel: labelById.get(m.class_id) ?? "—" };
+      });
+      mapped.sort((a, b) => {
+        const cl = (a.classLabel ?? "").localeCompare(b.classLabel ?? "");
+        if (cl !== 0) return cl;
+        const da = difficultyOrderIndex(normalizeMissionDifficulty(a.difficulty));
+        const db = difficultyOrderIndex(normalizeMissionDifficulty(b.difficulty));
+        if (da !== db) return da - db;
+        return a.created_at.localeCompare(b.created_at);
+      });
+      setAllMissionsOverview(mapped);
     } catch {
       setAllMissionsOverview([]);
     } finally {
@@ -422,7 +436,7 @@ export function TeacherDashboard() {
         setLoadError(me.message);
         return;
       }
-      const mrows = (miss || []) as MissionRow[];
+      const mrows = sortMissionsByDifficultyThenCreated((miss || []) as MissionRow[]);
       setMissions(mrows);
       const missionIds = mrows.map((m) => m.id);
       if (missionIds.length === 0) {
@@ -765,6 +779,7 @@ export function TeacherDashboard() {
         max_number: maxNumber,
         operation_mode: operationMode,
         target_correct: Math.min(200, Math.max(1, targetCorrect)),
+        difficulty: newMissionDifficulty,
       });
       if (error) throw error;
       setNewMissionTitle("");
@@ -1501,6 +1516,36 @@ export function TeacherDashboard() {
                   required
                 />
               </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-bold text-slate-700">{t("teacherDifficultyLabel")}</label>
+                <p className="mt-1 text-xs text-slate-500">{t("teacherDifficultyHint")}</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {(["easy", "medium", "hard"] as const).map((d) => {
+                    const active = newMissionDifficulty === d;
+                    const sub =
+                      d === "easy"
+                        ? `${t("difficultyEasyTitle")} · ${t("difficultyEasySub")}`
+                        : d === "medium"
+                          ? `${t("difficultyMediumTitle")} · ${t("difficultyMediumSub")}`
+                          : `${t("difficultyHardTitle")} · ${t("difficultyHardSub")}`;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setNewMissionDifficulty(d)}
+                        className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition ${
+                          active
+                            ? "border-indigo-500 bg-indigo-50 shadow-md ring-2 ring-indigo-200"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
+                      >
+                        <MissionPlanet tier={d} size="sm" />
+                        <span className="text-[0.7rem] font-bold leading-tight text-slate-800">{sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700">{t("rangeLabel")}</label>
                 <select
@@ -1550,14 +1595,29 @@ export function TeacherDashboard() {
               </div>
             </form>
             <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4">
-              {missions.map((m) => (
-                <li key={m.id} className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-                  {m.title}{" "}
-                  <span className="font-normal text-slate-500">
-                    (≤{m.max_number}, {m.operation_mode}, {m.target_correct} ✓)
-                  </span>
-                </li>
-              ))}
+              {missions.map((m) => {
+                const d = normalizeMissionDifficulty(m.difficulty);
+                const dLabel =
+                  d === "easy"
+                    ? t("difficultyEasyTitle")
+                    : d === "medium"
+                      ? t("difficultyMediumTitle")
+                      : t("difficultyHardTitle");
+                return (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800"
+                  >
+                    <MissionPlanet tier={d} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-black">{m.title}</span>{" "}
+                      <span className="font-normal text-slate-500">
+                        ({dLabel} · ≤{m.max_number}, {m.operation_mode}, {m.target_correct} ✓)
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
               {missions.length === 0 && (
                 <li className="text-slate-500">{t("noMissionsTeacher")}</li>
               )}
@@ -1663,14 +1723,17 @@ export function TeacherDashboard() {
                 <button
                   type="button"
                   onClick={() => goToMissionResults(m.class_id, m.id)}
-                  className="flex w-full flex-col items-start rounded-2xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-left transition hover:border-violet-400 hover:bg-violet-50"
+                  className="flex w-full items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 px-3 py-3 text-left transition hover:border-violet-400 hover:bg-violet-50"
                 >
-                  <span className="font-bold text-slate-900">{m.title}</span>
-                  <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
-                    {m.classLabel}
-                  </span>
-                  <span className="mt-2 text-xs font-bold text-violet-600 underline-offset-2 hover:underline">
-                    {t("teacherMissionGoToResults")} →
+                  <MissionPlanet tier={normalizeMissionDifficulty(m.difficulty)} size="sm" className="shrink-0" />
+                  <span className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="font-bold text-slate-900">{m.title}</span>
+                    <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
+                      {m.classLabel}
+                    </span>
+                    <span className="mt-2 text-xs font-bold text-violet-600 underline-offset-2 hover:underline">
+                      {t("teacherMissionGoToResults")} →
+                    </span>
                   </span>
                 </button>
               </li>

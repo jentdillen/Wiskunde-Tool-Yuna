@@ -7,6 +7,7 @@ import { SpeechBubble } from "@/components/astronauts/SpeechBubble";
 import { useLocale } from "@/contexts/LocaleContext";
 import { verifyKidMatchesSession } from "@/lib/kid-auth";
 import { clearKidJoinDraft, readKidJoinDraft, writeKidJoinDraft } from "@/lib/kid-session";
+import { isMissionUnlockedForKid, sortMissionsByDifficultyThenCreated } from "@/lib/missions";
 import { getSupabase } from "@/lib/supabase/client";
 
 function IntroInner() {
@@ -33,6 +34,26 @@ function IntroInner() {
         await supabase.auth.signOut();
         clearKidJoinDraft();
         router.replace("/");
+        return;
+      }
+      const { data: missionRow, error: me } = await supabase
+        .from("missions")
+        .select("id, difficulty, class_id")
+        .eq("id", missionId)
+        .maybeSingle();
+      if (me || !missionRow || missionRow.class_id !== draft.classId) {
+        router.replace("/missies");
+        return;
+      }
+      const { data: allMiss } = await supabase
+        .from("missions")
+        .select("id, difficulty, created_at")
+        .eq("class_id", draft.classId);
+      const sorted = sortMissionsByDifficultyThenCreated(
+        (allMiss || []) as { id: string; difficulty?: string; created_at: string }[]
+      );
+      if (!isMissionUnlockedForKid(missionRow, sorted, draft.missionCompletions)) {
+        router.replace("/missies");
         return;
       }
       setOk(true);

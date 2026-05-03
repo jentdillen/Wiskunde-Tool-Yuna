@@ -23,6 +23,7 @@ import {
   type Question,
 } from "@/lib/math";
 import { SpacePracticeBackdrop } from "@/components/SpaceBackdrop";
+import { isMissionUnlockedForKid, sortMissionsByDifficultyThenCreated } from "@/lib/missions";
 import { playSuccessBeep } from "@/lib/sound";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -51,6 +52,8 @@ function OefenenInner() {
   /** Total answered (incl. wrong) in this run — for success % on /missies */
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [missionComplete, setMissionComplete] = useState(false);
+  /** Score van de net afgeronde poging (voor <50% → opnieuw proberen). */
+  const [completionRunPct, setCompletionRunPct] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [wrongStreak, setWrongStreak] = useState(0);
   const [helpRequestId, setHelpRequestId] = useState<string | null>(null);
@@ -142,6 +145,26 @@ function OefenenInner() {
     return () => window.clearInterval(id);
   }, [supabase, helpRequestId, teacherOnWay, missionComplete]);
 
+  const retryMission = useCallback(() => {
+    if (!mission) return;
+    const draft = readKidJoinDraft();
+    if (!draft) return;
+    const newAttemptId = crypto.randomUUID();
+    writeKidJoinDraft({
+      ...draft,
+      activeMissionAttempt: { missionId: mission.id, attemptId: newAttemptId },
+    });
+    setAttemptId(newAttemptId);
+    setCorrect(0);
+    setTotalAnswered(0);
+    setMissionComplete(false);
+    setCompletionRunPct(null);
+    setFeedback("idle");
+    setSubmitError(null);
+    usedQuestionKeysRef.current.clear();
+    startQuestion(mission);
+  }, [mission, startQuestion]);
+
   const sendHelpRequest = useCallback(async () => {
     if (!supabase || !mission || !studentId || !attemptId || !question) return;
     const draft = readKidJoinDraft();
@@ -213,9 +236,26 @@ function OefenenInner() {
         return;
       }
       const m = row as MissionRow;
+      if (m.class_id !== draft.classId) {
+        router.replace("/missies");
+        return;
+      }
+      const { data: allMiss } = await supabase
+        .from("missions")
+        .select("id, difficulty, created_at")
+        .eq("class_id", draft.classId);
+      if (cancelled) return;
+      const sorted = sortMissionsByDifficultyThenCreated(
+        (allMiss || []) as { id: string; difficulty?: string; created_at: string }[]
+      );
+      if (!isMissionUnlockedForKid(m, sorted, draft.missionCompletions)) {
+        router.replace("/missies");
+        return;
+      }
       setMission(m);
       setAttemptId(att.attemptId);
       setStudentId(draft.studentId);
+      setCompletionRunPct(null);
       usedQuestionKeysRef.current = new Set();
       startQuestion(m);
       setReady(true);
@@ -285,11 +325,12 @@ function OefenenInner() {
       setFeedback("correct");
       playSuccessBeep();
       if (nextCorrect >= targetCorrect) {
+        const pct =
+          nextTotal > 0 ? Math.min(100, Math.round((nextCorrect / nextTotal) * 100)) : 100;
+        setCompletionRunPct(pct);
         setMissionComplete(true);
         const draft = readKidJoinDraft();
         if (draft) {
-          const pct =
-            nextTotal > 0 ? Math.min(100, Math.round((nextCorrect / nextTotal) * 100)) : 100;
           writeKidJoinDraft(recordMissionCompletion(draft, mission.id, pct));
         }
       } else {
@@ -388,12 +429,39 @@ function OefenenInner() {
           <div className="w-full max-w-md rounded-3xl border border-cyan-500/35 bg-slate-950/85 p-5 text-center shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md sm:p-6">
             <p className="text-3xl font-black text-white">{t("missionCompleteTitle")}</p>
             <p className="mt-2 text-cyan-100/90">{t("missionCompleteBody")}</p>
+            {completionRunPct != null ? (
+              <p
+                className={`mt-3 text-2xl font-black tabular-nums ${completionRunPct > 50 ? "text-emerald-300" : "text-amber-300"}`}
+              >
+                {t("missionSuccessPct", { pct: completionRunPct })}
+              </p>
+            ) : null}
+            {completionRunPct != null && completionRunPct <= 50 ? (
+              <>
+                <div className="mt-4 rounded-2xl border-2 border-amber-400/55 bg-gradient-to-br from-amber-950/70 to-slate-900/80 px-4 py-4 text-left shadow-[0_0_24px_rgba(251,191,36,0.15)]">
+                  <p className="text-sm font-semibold leading-snug text-amber-50">
+                    {t("missionLowScoreHint", { pct: completionRunPct })}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => retryMission()}
+                  className="mt-5 w-full rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 py-4 text-lg font-black text-slate-950 shadow-[0_8px_28px_rgba(251,191,36,0.35)] transition hover:brightness-110 sm:py-4"
+                >
+                  {t("missionRetryButton")}
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               onClick={() => {
                 router.push("/missies");
               }}
-              className="mt-5 w-full rounded-2xl bg-cyan-500 py-3.5 font-black text-slate-950 hover:bg-cyan-400 sm:mt-6 sm:py-4"
+              className={`mt-5 w-full rounded-2xl py-3.5 font-black text-slate-950 sm:mt-6 sm:py-4 ${
+                completionRunPct != null && completionRunPct <= 50
+                  ? "border-2 border-cyan-400/50 bg-slate-800 text-cyan-100 hover:bg-slate-700"
+                  : "bg-cyan-500 hover:bg-cyan-400"
+              }`}
             >
               {t("missionBackToList")}
             </button>
