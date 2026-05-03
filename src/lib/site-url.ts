@@ -25,3 +25,11 @@ export function getTeacherLoginRedirectForEmail(): string {
   if (typeof window !== "undefined") return `${window.location.origin.replace(/\/$/, "")}/teacher/login`;
   return "";
 }
+
+/** OAuth redirect: land op docentendashboard (na Google / andere providers). */
+export function getTeacherDashboardRedirectUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv) return `${fromEnv.replace(/\/$/, "")}/teacher`;
+  if (typeof window !== "undefined") return `${window.location.origin.replace(/\/$/, "")}/teacher`;
+  return "";
+}

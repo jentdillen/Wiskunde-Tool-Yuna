@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
+import { TeacherGoogleAuthButton } from "@/components/TeacherGoogleAuthButton";
 import { useLocale } from "@/contexts/LocaleContext";
-import { getTeacherLoginRedirectForEmail } from "@/lib/site-url";
-import { formatTeacherAuthError, isEmailNotConfirmedMessage } from "@/lib/supabase/auth-errors";
+import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function TeacherLoginPage() {
@@ -18,10 +18,8 @@ export default function TeacherLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [resendBusy, setResendBusy] = useState(false);
-  const [showResend, setShowResend] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -35,40 +33,13 @@ export default function TeacherLoginPage() {
     if (!supabase) return;
     setBusy(true);
     setError(null);
-    setInfo(null);
-    setShowResend(false);
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
     if (err) {
-      setShowResend(isEmailNotConfirmedMessage(err.message));
       setError(formatTeacherAuthError(err.message, t));
       return;
     }
     router.replace("/teacher");
-  };
-
-  const onResend = async () => {
-    if (!supabase) return;
-    const emailTrim = email.trim();
-    if (!emailTrim) return;
-    setResendBusy(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const redirect = getTeacherLoginRedirectForEmail() || undefined;
-      const { error: err } = await supabase.auth.resend({
-        type: "signup",
-        email: emailTrim,
-        options: redirect ? { emailRedirectTo: redirect } : undefined,
-      });
-      if (err) {
-        setError(err.message);
-        return;
-      }
-      setInfo(t("signupResendOk"));
-    } finally {
-      setResendBusy(false);
-    }
   };
 
   if (!supabase) return <SetupRequired />;
@@ -83,17 +54,17 @@ export default function TeacherLoginPage() {
         <div className="w-full rounded-3xl border-2 border-indigo-100 bg-white p-6 shadow-xl">
           <h1 className="text-2xl font-black text-indigo-950">{t("teacherLogin")}</h1>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-          {info && <p className="mt-3 text-sm text-emerald-700">{info}</p>}
-          {showResend ? (
-            <button
-              type="button"
-              disabled={resendBusy || !email.trim()}
-              onClick={() => void onResend()}
-              className="mt-3 w-full rounded-2xl border-2 border-violet-200 bg-violet-50 py-2.5 text-sm font-bold text-violet-900 hover:bg-violet-100 disabled:opacity-50"
-            >
-              {resendBusy ? t("loading") : t("signupResendEmail")}
-            </button>
-          ) : null}
+
+          <div className="mt-4 space-y-3">
+            <TeacherGoogleAuthButton
+              label={t("teacherGoogleContinue")}
+              disabled={busy}
+              onBusy={setGoogleBusy}
+              onError={setError}
+            />
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">{t("teacherAuthDivider")}</p>
+          </div>
+
           <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
             <div>
               <label className="block text-sm font-bold text-slate-700">{t("email")}</label>
@@ -119,7 +90,7 @@ export default function TeacherLoginPage() {
             </div>
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || googleBusy}
               className="w-full rounded-2xl bg-indigo-600 py-3.5 font-black text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {busy ? t("loading") : t("signIn")}

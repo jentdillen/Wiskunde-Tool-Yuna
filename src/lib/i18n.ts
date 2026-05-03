@@ -135,14 +135,12 @@ export const translations = {
     signIn: "Inloggen",
     haveAccount: "Al een account? Inloggen",
     needAccount: "Nog geen account? Registreren",
-    signupConfirmEmail: "Bevestig je e-mail om verder te gaan (check je inbox).",
-    signupCheckEmailBody:
-      "We hebben een bevestigingslink gestuurd naar {email}. Open die link om je account te activeren. Daarna kun je hieronder inloggen.",
-    signupResendEmail: "Bevestigingsmail opnieuw versturen",
-    signupResendOk: "Er is opnieuw een bevestigingsmail verstuurd.",
-    signupResendErr: "Versturen lukte niet. Probeer het zo opnieuw of neem contact op met je beheerder.",
+    teacherGoogleContinue: "Ga verder met Google",
+    teacherAuthDivider: "of met e-mail",
     authErrEmailNotConfirmed:
-      "Bevestig eerst je e-mail via de link in je inbox (check ook spam). Daarna kun je inloggen.",
+      "Inloggen lukt nog niet: waarschijnlijk staat in Supabase nog «Confirm email» aan. Zet die uit (Authentication → Providers → Email), of gebruik «Ga verder met Google».",
+    authErrSupabaseConfirmStillOn:
+      "Registreren is gelukt, maar je krijgt geen sessie: zet in Supabase bij Authentication → Providers → Email «Confirm email» uit voor direct inloggen.",
     authErrInvalidCredentials: "E-mail of wachtwoord klopt niet.",
     back: "Terug",
     fullNameLabel: "Volledige naam",
@@ -381,14 +379,12 @@ export const translations = {
     signIn: "Log in",
     haveAccount: "Already have an account? Log in",
     needAccount: "Need an account? Sign up",
-    signupConfirmEmail: "Confirm your email to continue (check your inbox).",
-    signupCheckEmailBody:
-      "We’ve sent a confirmation link to {email}. Open it to activate your account, then log in below.",
-    signupResendEmail: "Resend confirmation email",
-    signupResendOk: "A new confirmation email has been sent.",
-    signupResendErr: "Could not send. Try again or contact your administrator.",
+    teacherGoogleContinue: "Continue with Google",
+    teacherAuthDivider: "or with email",
     authErrEmailNotConfirmed:
-      "Please confirm your email using the link we sent (check spam). Then you can log in.",
+      "Can’t sign in yet: «Confirm email» is probably still enabled in Supabase. Turn it off under Authentication → Providers → Email, or use «Continue with Google».",
+    authErrSupabaseConfirmStillOn:
+      "Sign-up worked but there’s no session: disable «Confirm email» under Authentication → Providers → Email in Supabase for instant login.",
     authErrInvalidCredentials: "Invalid email or password.",
     back: "Back",
     fullNameLabel: "Full name",
