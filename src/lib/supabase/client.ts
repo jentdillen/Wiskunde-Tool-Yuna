@@ -8,7 +8,14 @@ export function getSupabase(): SupabaseClient | null {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   if (!browserClient) {
-    browserClient = createClient(url, key);
+    browserClient = createClient(url, key, {
+      auth: {
+        flowType: "pkce",
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    });
   }
   return browserClient;
 }

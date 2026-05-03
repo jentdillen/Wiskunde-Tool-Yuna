@@ -136,8 +136,13 @@ export const translations = {
     haveAccount: "Al een account? Inloggen",
     needAccount: "Nog geen account? Registreren",
     signupConfirmEmail: "Bevestig je e-mail om verder te gaan (check je inbox).",
+    signupCheckEmailBody:
+      "We hebben een bevestigingslink gestuurd naar {email}. Open die link om je account te activeren. Daarna kun je hieronder inloggen.",
+    signupResendEmail: "Bevestigingsmail opnieuw versturen",
+    signupResendOk: "Er is opnieuw een bevestigingsmail verstuurd.",
+    signupResendErr: "Versturen lukte niet. Probeer het zo opnieuw of neem contact op met je beheerder.",
     authErrEmailNotConfirmed:
-      "Je account bestaat, maar je e-mail is nog niet bevestigd. Geen mail ontvangen? Controleer spam. Voor direct inloggen na registreren: in Supabase → Authentication → Providers → Email → zet «Confirm email» uit (en stel eventueel SMTP in als je bevestiging wél wilt).",
+      "Bevestig eerst je e-mail via de link in je inbox (check ook spam). Daarna kun je inloggen.",
     authErrInvalidCredentials: "E-mail of wachtwoord klopt niet.",
     back: "Terug",
     fullNameLabel: "Volledige naam",
@@ -377,8 +382,13 @@ export const translations = {
     haveAccount: "Already have an account? Log in",
     needAccount: "Need an account? Sign up",
     signupConfirmEmail: "Confirm your email to continue (check your inbox).",
+    signupCheckEmailBody:
+      "We’ve sent a confirmation link to {email}. Open it to activate your account, then log in below.",
+    signupResendEmail: "Resend confirmation email",
+    signupResendOk: "A new confirmation email has been sent.",
+    signupResendErr: "Could not send. Try again or contact your administrator.",
     authErrEmailNotConfirmed:
-      "Your account exists, but your email isn’t confirmed yet. No message? Check spam. For instant login after sign-up: in Supabase go to Authentication → Providers → Email → turn off «Confirm email» (configure SMTP if you want confirmation emails).",
+      "Please confirm your email using the link we sent (check spam). Then you can log in.",
     authErrInvalidCredentials: "Invalid email or password.",
     back: "Back",
     fullNameLabel: "Full name",
