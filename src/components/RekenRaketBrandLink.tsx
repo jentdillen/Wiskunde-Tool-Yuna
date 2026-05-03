@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLocale } from "@/contexts/LocaleContext";
 
 /**
- * Compact logo linksboven; schaalt mee op kleine schermen (max-breedte).
+ * Logo linksboven; schaalt mee op kleine schermen (max-breedte).
  * Op docentenroutes linkt naar /teacher, anders naar /.
  */
 export function RekenRaketBrandLink({ className = "" }: { className?: string }) {
@@ -22,12 +22,12 @@ export function RekenRaketBrandLink({ className = "" }: { className?: string }) 
       aria-label={t("brandHomeAria")}
     >
       <Image
-        src="/reken-raket-logo.png"
+        src="/reken-ster-logo.png"
         alt=""
-        width={320}
-        height={82}
+        width={400}
+        height={150}
         priority
-        className="h-10 w-auto max-h-[2.6rem] max-w-[min(72vw,18rem)] object-contain object-left sm:h-12 sm:max-h-[3.1rem] sm:max-w-[22rem]"
+        className="h-12 w-auto max-h-[3.25rem] max-w-[min(88vw,22rem)] object-contain object-left sm:h-14 sm:max-h-[3.75rem] sm:max-w-[26rem] md:h-16 md:max-h-[4.25rem] md:max-w-[30rem]"
       />
     </Link>
   );

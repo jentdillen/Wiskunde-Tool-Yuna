@@ -10,8 +10,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "reken raket",
-  description: "Interactieve rekenoefeningen voor in de klas — reken raket.",
+  title: "reken ster",
+  description: "Interactieve rekenoefeningen voor in de klas — reken ster.",
 };
 
 export default function RootLayout({
@@ -34,7 +34,7 @@ export default function RootLayout({
               fontFamily: "system-ui, sans-serif",
             }}
           >
-            <strong>JavaScript staat uit.</strong> Zet JavaScript aan om reken raket te gebruiken.
+            <strong>JavaScript staat uit.</strong> Zet JavaScript aan om reken ster te gebruiken.
           </div>
         </noscript>
         <LocaleProvider>
