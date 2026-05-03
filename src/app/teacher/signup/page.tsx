@@ -10,6 +10,7 @@ import { TeacherGoogleAuthButton } from "@/components/TeacherGoogleAuthButton";
 import { useLocale } from "@/contexts/LocaleContext";
 import { formatTeacherAuthError, isEmailNotConfirmedMessage } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
+import { isTeacherGoogleAuthEnabled } from "@/lib/teacher-google-auth";
 
 export default function TeacherSignupPage() {
   const { t } = useLocale();
@@ -85,15 +86,19 @@ export default function TeacherSignupPage() {
           <h1 className="text-2xl font-black text-indigo-950">{t("teacherSignup")}</h1>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-          <div className="mt-4 space-y-3">
-            <TeacherGoogleAuthButton
-              label={t("teacherGoogleContinue")}
-              disabled={busy}
-              onBusy={setGoogleBusy}
-              onError={setError}
-            />
-            <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">{t("teacherAuthDivider")}</p>
-          </div>
+          {isTeacherGoogleAuthEnabled() ? (
+            <div className="mt-4 space-y-3">
+              <TeacherGoogleAuthButton
+                label={t("teacherGoogleContinue")}
+                disabled={busy}
+                onBusy={setGoogleBusy}
+                onError={setError}
+              />
+              <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {t("teacherAuthDivider")}
+              </p>
+            </div>
+          ) : null}
 
           <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
             <div>

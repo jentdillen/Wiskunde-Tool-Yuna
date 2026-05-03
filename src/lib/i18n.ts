@@ -136,6 +136,8 @@ export const translations = {
     haveAccount: "Al een account? Inloggen",
     needAccount: "Nog geen account? Registreren",
     teacherGoogleContinue: "Ga verder met Google",
+    teacherGoogleNotEnabled:
+      "Google-inloggen staat in dit project nog niet aan. In Supabase: Authentication → Providers → Google inschakelen (Client ID en Secret van Google Cloud). Voeg onder URL Configuration bij Redirect URLs je site toe, bv. https://jouw-domein/teacher. Tot die tijd: log in met e-mail en wachtwoord.",
     teacherAuthDivider: "of met e-mail",
     authErrEmailNotConfirmed:
       "Inloggen lukt nog niet: waarschijnlijk staat in Supabase nog «Confirm email» aan. Zet die uit (Authentication → Providers → Email), of gebruik «Ga verder met Google».",
@@ -380,6 +382,8 @@ export const translations = {
     haveAccount: "Already have an account? Log in",
     needAccount: "Need an account? Sign up",
     teacherGoogleContinue: "Continue with Google",
+    teacherGoogleNotEnabled:
+      "Google sign-in isn’t set up for this project yet. In Supabase: enable Authentication → Providers → Google (Client ID and Secret from Google Cloud). Under URL Configuration → Redirect URLs, add your app URL, e.g. https://your-domain/teacher. Until then, use email and password.",
     teacherAuthDivider: "or with email",
     authErrEmailNotConfirmed:
       "Can’t sign in yet: «Confirm email» is probably still enabled in Supabase. Turn it off under Authentication → Providers → Email, or use «Continue with Google».",

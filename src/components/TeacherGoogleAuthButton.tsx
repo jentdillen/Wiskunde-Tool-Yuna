@@ -1,6 +1,8 @@
 "use client";
 
+import { useLocale } from "@/contexts/LocaleContext";
 import { getTeacherDashboardRedirectUrl } from "@/lib/site-url";
+import { formatGoogleOAuthClientError } from "@/lib/teacher-google-auth";
 import { getSupabase } from "@/lib/supabase/client";
 
 type Props = {
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export function TeacherGoogleAuthButton({ label, disabled, onBusy, onError }: Props) {
+  const { t } = useLocale();
   const onClick = async () => {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -23,7 +26,7 @@ export function TeacherGoogleAuthButton({ label, disabled, onBusy, onError }: Pr
     });
     if (error) {
       onBusy?.(false);
-      onError(error.message);
+      onError(formatGoogleOAuthClientError(error.message, t));
     }
   };
 

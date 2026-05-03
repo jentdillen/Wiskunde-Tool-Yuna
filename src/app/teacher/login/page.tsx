@@ -8,6 +8,7 @@ import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
 import { TeacherGoogleAuthButton } from "@/components/TeacherGoogleAuthButton";
 import { useLocale } from "@/contexts/LocaleContext";
+import { isTeacherGoogleAuthEnabled } from "@/lib/teacher-google-auth";
 import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -55,15 +56,19 @@ export default function TeacherLoginPage() {
           <h1 className="text-2xl font-black text-indigo-950">{t("teacherLogin")}</h1>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-          <div className="mt-4 space-y-3">
-            <TeacherGoogleAuthButton
-              label={t("teacherGoogleContinue")}
-              disabled={busy}
-              onBusy={setGoogleBusy}
-              onError={setError}
-            />
-            <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">{t("teacherAuthDivider")}</p>
-          </div>
+          {isTeacherGoogleAuthEnabled() ? (
+            <div className="mt-4 space-y-3">
+              <TeacherGoogleAuthButton
+                label={t("teacherGoogleContinue")}
+                disabled={busy}
+                onBusy={setGoogleBusy}
+                onError={setError}
+              />
+              <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {t("teacherAuthDivider")}
+              </p>
+            </div>
+          ) : null}
 
           <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
             <div>
