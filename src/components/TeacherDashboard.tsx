@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { SetupRequired } from "@/components/SetupRequired";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { AnswerRow, ClassRow, MissionRow, StudentRow, TeacherProfileRow } from "@/lib/db";
+import { teacherCallName } from "@/lib/kid-session";
 import { getSupabase } from "@/lib/supabase/client";
 import { formatQuestion, formatQuestionKeyLabel, type OperationMode, type Question } from "@/lib/math";
 
@@ -198,6 +199,24 @@ export function TeacherDashboard() {
   const [missionResultsFilterId, setMissionResultsFilterId] = useState<string | null>(null);
   const [pendingHelpRequests, setPendingHelpRequests] = useState<PendingHelpItem[]>([]);
   const [helpAckBusyId, setHelpAckBusyId] = useState<string | null>(null);
+
+  /** Zelfde zin als op het leerlingenscherm bij «komt helpen» (voornaam + meester/juf). */
+  const studentHelpPreviewLine = useMemo(() => {
+    if (!profile) return "";
+    const first = teacherCallName(profile.full_name ?? "");
+    const addr = profile.address_as === "meester" ? "meester" : "juf";
+    if (!first) return t("practiceTeacherOnWayCardGeneric");
+    if (addr === "meester") return t("practiceTeacherOnWayCardMeester", { name: first });
+    return t("practiceTeacherOnWayCardJuf", { name: first });
+  }, [profile, t]);
+
+  const studentHelpPreviewLineFromForm = useMemo(() => {
+    const first = teacherCallName(editFullName);
+    const addr = editAddressAs === "meester" ? "meester" : "juf";
+    if (!first) return t("practiceTeacherOnWayCardGeneric");
+    if (addr === "meester") return t("practiceTeacherOnWayCardMeester", { name: first });
+    return t("practiceTeacherOnWayCardJuf", { name: first });
+  }, [editFullName, editAddressAs, t]);
 
   const loadPendingHelpRequests = useCallback(async () => {
     if (!supabase || classes.length === 0) {
@@ -1294,6 +1313,12 @@ export function TeacherDashboard() {
                       />
                       {t("teacherAddressJuf")}
                     </label>
+                  </div>
+                  <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/80 px-3 py-2.5">
+                    <p className="text-[0.65rem] font-black uppercase tracking-wider text-indigo-600">
+                      {t("teacherAccountHelpPreviewCaption")}
+                    </p>
+                    <p className="mt-1 text-base font-black text-indigo-950">{studentHelpPreviewLineFromForm}</p>
                   </div>
                 </fieldset>
                 <div>
