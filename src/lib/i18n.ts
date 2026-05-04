@@ -135,14 +135,18 @@ export const translations = {
     signIn: "Inloggen",
     haveAccount: "Al een account? Inloggen",
     needAccount: "Nog geen account? Registreren",
-    teacherGoogleContinue: "Ga verder met Google",
-    teacherGoogleNotEnabled:
-      "Google-inloggen staat in dit project nog niet aan. In Supabase: Authentication → Providers → Google inschakelen (Client ID en Secret van Google Cloud). Voeg onder URL Configuration bij Redirect URLs je site toe, bv. https://jouw-domein/teacher. Tot die tijd: log in met e-mail en wachtwoord.",
-    teacherAuthDivider: "of met e-mail",
+    signupCheckInboxTitle: "Controleer je e-mail",
+    signupCheckInboxBody:
+      "We hebben een bevestigingsmail gestuurd naar {email}. Open die mail en klik op de bevestigingslink om je account te activeren.",
+    signupCheckInboxHint:
+      "Daarna kom je terug op het inlogscherm. Log daar in met je e-mail en wachtwoord.",
+    signupResendEmail: "Bevestigingsmail opnieuw sturen",
+    signupResendOk: "Er is opnieuw een bevestigingsmail verstuurd.",
+    signupResendErr: "Opnieuw versturen lukte niet. Probeer zo meteen nog eens.",
+    loginAfterConfirmOk: "E-mail bevestigd. Je kunt nu inloggen met je e-mail en wachtwoord.",
+    teacherEmailConfirmBusy: "Eén moment — we brengen je naar het inlogscherm voor leerkrachten.",
     authErrEmailNotConfirmed:
-      "Inloggen lukt nog niet: waarschijnlijk staat in Supabase nog «Confirm email» aan. Zet die uit (Authentication → Providers → Email), of gebruik «Ga verder met Google».",
-    authErrSupabaseConfirmStillOn:
-      "Registreren is gelukt, maar je krijgt geen sessie: zet in Supabase bij Authentication → Providers → Email «Confirm email» uit voor direct inloggen.",
+      "Je e-mail is nog niet bevestigd. Controleer je inbox (en spam) en klik op de bevestigingslink.",
     authErrInvalidCredentials: "E-mail of wachtwoord klopt niet.",
     back: "Terug",
     fullNameLabel: "Volledige naam",
@@ -381,14 +385,18 @@ export const translations = {
     signIn: "Log in",
     haveAccount: "Already have an account? Log in",
     needAccount: "Need an account? Sign up",
-    teacherGoogleContinue: "Continue with Google",
-    teacherGoogleNotEnabled:
-      "Google sign-in isn’t set up for this project yet. In Supabase: enable Authentication → Providers → Google (Client ID and Secret from Google Cloud). Under URL Configuration → Redirect URLs, add your app URL, e.g. https://your-domain/teacher. Until then, use email and password.",
-    teacherAuthDivider: "or with email",
+    signupCheckInboxTitle: "Check your email",
+    signupCheckInboxBody:
+      "We sent a confirmation email to {email}. Open it and click the confirmation link to activate your account.",
+    signupCheckInboxHint:
+      "After that, you will return to the login screen. Sign in there with your email and password.",
+    signupResendEmail: "Resend confirmation email",
+    signupResendOk: "A new confirmation email has been sent.",
+    signupResendErr: "Resending failed. Please try again in a moment.",
+    loginAfterConfirmOk: "Email confirmed. You can now sign in with your email and password.",
+    teacherEmailConfirmBusy: "One moment — taking you to the teacher login screen.",
     authErrEmailNotConfirmed:
-      "Can’t sign in yet: «Confirm email» is probably still enabled in Supabase. Turn it off under Authentication → Providers → Email, or use «Continue with Google».",
-    authErrSupabaseConfirmStillOn:
-      "Sign-up worked but there’s no session: disable «Confirm email» under Authentication → Providers → Email in Supabase for instant login.",
+      "Your email is not confirmed yet. Check your inbox (and spam) and click the confirmation link.",
     authErrInvalidCredentials: "Invalid email or password.",
     back: "Back",
     fullNameLabel: "Full name",

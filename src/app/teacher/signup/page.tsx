@@ -6,11 +6,10 @@ import { useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
-import { TeacherGoogleAuthButton } from "@/components/TeacherGoogleAuthButton";
 import { useLocale } from "@/contexts/LocaleContext";
-import { formatTeacherAuthError, isEmailNotConfirmedMessage } from "@/lib/supabase/auth-errors";
+import { getTeacherEmailConfirmLandingUrl } from "@/lib/site-url";
+import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
-import { isTeacherGoogleAuthEnabled } from "@/lib/teacher-google-auth";
 
 export default function TeacherSignupPage() {
   const { t } = useLocale();
@@ -22,20 +21,25 @@ export default function TeacherSignupPage() {
   const [schoolName, setSchoolName] = useState("");
   const [addressAs, setAddressAs] = useState<"meester" | "juf">("juf");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [googleBusy, setGoogleBusy] = useState(false);
+  const [awaitingEmailConfirmation, setAwaitingEmailConfirmation] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const emailTrim = email.trim();
+      const redirectTo = getTeacherEmailConfirmLandingUrl();
       const { data, error: err } = await supabase.auth.signUp({
         email: emailTrim,
         password,
         options: {
+          emailRedirectTo: redirectTo,
           data: {
             full_name: fullName.trim(),
             school_name: schoolName.trim(),
@@ -51,25 +55,33 @@ export default function TeacherSignupPage() {
         router.replace("/teacher");
         return;
       }
-      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-        email: emailTrim,
-        password,
-      });
-      if (!signInErr && signInData.session) {
-        router.replace("/teacher");
-        return;
-      }
-      if (signInErr && isEmailNotConfirmedMessage(signInErr.message)) {
-        setError(t("authErrSupabaseConfirmStillOn"));
-        return;
-      }
-      if (signInErr) {
-        setError(formatTeacherAuthError(signInErr.message, t));
-        return;
-      }
-      setError(t("authErrSupabaseConfirmStillOn"));
+      setAwaitingEmailConfirmation(true);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onResend = async () => {
+    if (!supabase) return;
+    const emailTrim = email.trim();
+    if (!emailTrim) return;
+    setResendBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const redirectTo = getTeacherEmailConfirmLandingUrl();
+      const { error: resendErr } = await supabase.auth.resend({
+        type: "signup",
+        email: emailTrim,
+        options: { emailRedirectTo: redirectTo },
+      });
+      if (resendErr) {
+        setError(t("signupResendErr"));
+        return;
+      }
+      setInfo(t("signupResendOk"));
+    } finally {
+      setResendBusy(false);
     }
   };
 
@@ -85,22 +97,38 @@ export default function TeacherSignupPage() {
         <div className="w-full rounded-3xl border-2 border-indigo-100 bg-white p-6 shadow-xl">
           <h1 className="text-2xl font-black text-indigo-950">{t("teacherSignup")}</h1>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {info && <p className="mt-3 text-sm text-emerald-700">{info}</p>}
 
-          {isTeacherGoogleAuthEnabled() ? (
-            <div className="mt-4 space-y-3">
-              <TeacherGoogleAuthButton
-                label={t("teacherGoogleContinue")}
-                disabled={busy}
-                onBusy={setGoogleBusy}
-                onError={setError}
-              />
-              <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
-                {t("teacherAuthDivider")}
+          {awaitingEmailConfirmation ? (
+            <div className="mt-5 rounded-3xl border-2 border-emerald-200 bg-gradient-to-b from-emerald-50 via-white to-emerald-50 p-6 text-center shadow-lg">
+              <p className="text-5xl" aria-hidden>
+                📧
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-emerald-900 sm:text-4xl">
+                {t("signupCheckInboxTitle")}
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-slate-800 sm:text-lg">
+                {t("signupCheckInboxBody", { email })}
+              </p>
+              <p className="mt-3 text-sm font-semibold text-emerald-800/90">{t("signupCheckInboxHint")}</p>
+              <button
+                type="button"
+                disabled={resendBusy}
+                onClick={() => void onResend()}
+                className="mt-5 w-full rounded-2xl border-2 border-emerald-300 bg-white py-3 font-bold text-emerald-900 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                {resendBusy ? t("loading") : t("signupResendEmail")}
+              </button>
+              <p className="mt-4 text-center text-sm text-slate-600">
+                <Link href="/teacher/login" className="font-bold text-indigo-700 underline-offset-2 hover:underline">
+                  {t("haveAccount")}
+                </Link>
               </p>
             </div>
           ) : null}
 
-          <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
+          {!awaitingEmailConfirmation ? (
+            <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
             <div>
               <label className="block text-sm font-bold text-slate-700">{t("email")}</label>
               <input
@@ -174,18 +202,21 @@ export default function TeacherSignupPage() {
             </div>
             <button
               type="submit"
-              disabled={busy || googleBusy}
+              disabled={busy}
               className="w-full rounded-2xl bg-violet-600 py-3.5 font-black text-white hover:bg-violet-700 disabled:opacity-50"
             >
               {busy ? t("loading") : t("createAccount")}
             </button>
-          </form>
+            </form>
+          ) : null}
 
-          <p className="mt-4 text-center text-sm text-slate-600">
+          {!awaitingEmailConfirmation ? (
+            <p className="mt-4 text-center text-sm text-slate-600">
             <Link href="/teacher/login" className="font-bold text-indigo-700 underline-offset-2 hover:underline">
               {t("haveAccount")}
             </Link>
-          </p>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

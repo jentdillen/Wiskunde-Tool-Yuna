@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { StudentJoinForm } from "@/components/StudentJoinForm";
@@ -8,6 +9,22 @@ import { useLocale } from "@/contexts/LocaleContext";
 
 export default function Home() {
   const { t } = useLocale();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const hash = url.hash;
+    const looksLikeAuthReturn =
+      Boolean(code) ||
+      hash.includes("access_token") ||
+      hash.includes("type=signup") ||
+      hash.includes("type=recovery");
+    if (!looksLikeAuthReturn) return;
+    if (url.pathname !== "/" && url.pathname !== "") return;
+    window.location.replace(`/teacher/email-confirmed${url.search}${url.hash}`);
+  }, []);
+
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col items-stretch justify-start bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-6 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pb-8 sm:pt-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.08),transparent_55%)]" />

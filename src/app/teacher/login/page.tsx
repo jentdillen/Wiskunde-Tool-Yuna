@@ -1,39 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
-import { TeacherGoogleAuthButton } from "@/components/TeacherGoogleAuthButton";
 import { useLocale } from "@/contexts/LocaleContext";
-import { isTeacherGoogleAuthEnabled } from "@/lib/teacher-google-auth";
 import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function TeacherLoginPage() {
   const { t } = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => getSupabase(), []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [googleBusy, setGoogleBusy] = useState(false);
+  const fromConfirmation = searchParams.get("confirmed") === "1";
 
   useEffect(() => {
     if (!supabase) return;
+    if (fromConfirmation) {
+      setInfo(t("loginAfterConfirmOk"));
+      void supabase.auth.signOut({ scope: "local" });
+      return;
+    }
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace("/teacher");
     });
-  }, [supabase, router]);
+  }, [supabase, router, fromConfirmation, t]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     setBusy(true);
     setError(null);
+    setInfo(null);
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
     if (err) {
@@ -55,20 +61,7 @@ export default function TeacherLoginPage() {
         <div className="w-full rounded-3xl border-2 border-indigo-100 bg-white p-6 shadow-xl">
           <h1 className="text-2xl font-black text-indigo-950">{t("teacherLogin")}</h1>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-          {isTeacherGoogleAuthEnabled() ? (
-            <div className="mt-4 space-y-3">
-              <TeacherGoogleAuthButton
-                label={t("teacherGoogleContinue")}
-                disabled={busy}
-                onBusy={setGoogleBusy}
-                onError={setError}
-              />
-              <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
-                {t("teacherAuthDivider")}
-              </p>
-            </div>
-          ) : null}
+          {info && <p className="mt-3 text-sm text-emerald-700">{info}</p>}
 
           <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4">
             <div>
@@ -95,7 +88,7 @@ export default function TeacherLoginPage() {
             </div>
             <button
               type="submit"
-              disabled={busy || googleBusy}
+              disabled={busy}
               className="w-full rounded-2xl bg-indigo-600 py-3.5 font-black text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {busy ? t("loading") : t("signIn")}
