@@ -16,6 +16,7 @@ import {
   isMissionUnlockedForKid,
   normalizeMissionDifficulty,
   sortMissionsByDifficultyThenCreated,
+  tierSatisfied,
   unlockBlockedReason,
 } from "@/lib/missions";
 import { getSupabase } from "@/lib/supabase/client";
@@ -26,6 +27,14 @@ export default function MissiesPage() {
   const supabase = useMemo(() => getSupabase(), []);
   const [missions, setMissions] = useState<MissionRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
+  const kidDraft = readKidJoinDraft();
+  const sorted = missions ?? [];
+  const allMissionsComplete =
+    sorted.length > 0 &&
+    tierSatisfied(sorted, "easy", kidDraft?.missionCompletions) &&
+    tierSatisfied(sorted, "medium", kidDraft?.missionCompletions) &&
+    tierSatisfied(sorted, "hard", kidDraft?.missionCompletions);
 
   useEffect(() => {
     if (!supabase) return;
@@ -65,6 +74,11 @@ export default function MissiesPage() {
     };
   }, [supabase, router]);
 
+  useEffect(() => {
+    if (!allMissionsComplete) return;
+    setShowAllDoneCelebration(true);
+  }, [allMissionsComplete]);
+
   if (!supabase) return <SetupRequired />;
 
   if (missions === null && !loadError) {
@@ -78,13 +92,54 @@ export default function MissiesPage() {
     );
   }
 
-  const kidDraft = readKidJoinDraft();
-  const sorted = missions ?? [];
-
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.1),transparent_50%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(167,139,250,0.08),transparent_45%)]" />
+      {showAllDoneCelebration ? (
+        <div
+          className="fixed inset-0 z-[220] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="all-missions-done-title"
+          aria-describedby="all-missions-done-body"
+        >
+          <div className="relative flex h-full w-full max-w-5xl flex-col items-center justify-center overflow-hidden">
+            <div className="pointer-events-none absolute left-[8%] top-[18%] animate-bounce [animation-duration:4.6s]">
+              <MissionPlanet tier="easy" size="md" />
+            </div>
+            <div className="pointer-events-none absolute right-[10%] top-[24%] animate-bounce [animation-duration:5.2s] [animation-delay:300ms]">
+              <MissionPlanet tier="medium" size="md" />
+            </div>
+            <div className="pointer-events-none absolute left-[16%] bottom-[24%] animate-bounce [animation-duration:5.8s] [animation-delay:700ms]">
+              <MissionPlanet tier="hard" size="md" />
+            </div>
+            <div className="pointer-events-none absolute right-[18%] bottom-[30%] scale-90 animate-bounce [animation-duration:6.4s] [animation-delay:1200ms]">
+              <MissionPlanet tier="easy" size="sm" />
+            </div>
+
+            <h2
+              id="all-missions-done-title"
+              className="pointer-events-none max-w-3xl animate-pulse text-center text-4xl font-black leading-tight text-amber-100 drop-shadow-[0_0_24px_rgba(251,191,36,0.4)] [animation-duration:3s] sm:text-6xl"
+            >
+              {t("missionAllDoneTitle")}
+            </h2>
+            <p
+              id="all-missions-done-body"
+              className="pointer-events-none mx-auto mt-5 max-w-2xl text-center text-lg font-bold text-cyan-100/95 drop-shadow-[0_0_16px_rgba(34,211,238,0.25)] sm:text-2xl"
+            >
+              {t("missionAllDoneBody")}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAllDoneCelebration(false)}
+              className="absolute bottom-8 left-1/2 w-full max-w-xs -translate-x-1/2 rounded-2xl bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 py-3.5 text-lg font-black text-slate-950 shadow-[0_8px_28px_rgba(251,191,36,0.35)] transition hover:brightness-110 sm:bottom-10"
+            >
+              Ga verder
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="relative z-20 flex w-full items-center justify-between gap-3 pb-2">
         <RekenRaketBrandLink />
         <LanguageToggle variant="dark" />
