@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RekenRaketBrandLink } from "@/components/RekenRaketBrandLink";
 import { SetupRequired } from "@/components/SetupRequired";
@@ -10,7 +10,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { formatTeacherAuthError } from "@/lib/supabase/auth-errors";
 import { getSupabase } from "@/lib/supabase/client";
 
-export default function TeacherLoginPage() {
+function TeacherLoginContent() {
   const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,5 +107,19 @@ export default function TeacherLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TeacherLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-dvh flex-1 items-center justify-center bg-gradient-to-b from-violet-50 to-indigo-50 px-4 text-indigo-900">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <TeacherLoginContent />
+    </Suspense>
   );
 }
