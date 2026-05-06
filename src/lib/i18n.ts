@@ -157,6 +157,9 @@ export const translations = {
     teacherDeleteClass: "Klas verwijderen",
     teacherDeleteClassConfirm:
       "Weet je zeker dat je de klas «{label}» wilt verwijderen? Alle missies, antwoorden en leerlingen in deze klas gaan verloren. Dit kan niet ongedaan worden gemaakt.",
+    teacherDeleteMission: "Missie verwijderen",
+    teacherDeleteMissionConfirm:
+      "Weet je zeker dat je de missie «{title}» wilt verwijderen? Alle antwoorden voor deze missie gaan verloren.",
     teacherDeleteStudent: "Uit klas halen",
     teacherDeleteStudentConfirm:
       "Leerling «{name}» uit deze klas halen? Die moet opnieuw inloggen om verder te gaan.",
@@ -414,6 +417,9 @@ export const translations = {
     teacherDeleteClass: "Delete class",
     teacherDeleteClassConfirm:
       "Delete class «{label}»? All missions, answers, and students in this class will be removed. This cannot be undone.",
+    teacherDeleteMission: "Delete mission",
+    teacherDeleteMissionConfirm:
+      "Delete mission «{title}»? All answers for this mission will be removed.",
     teacherDeleteStudent: "Remove from class",
     teacherDeleteStudentConfirm:
       "Remove «{name}» from this class? They will need to sign in again to continue.",

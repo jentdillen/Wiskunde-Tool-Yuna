@@ -792,6 +792,24 @@ export function TeacherDashboard() {
     }
   };
 
+  const deleteMission = async (m: MissionRow) => {
+    if (!supabase || !selectedClassId) return;
+    if (!window.confirm(t("teacherDeleteMissionConfirm", { title: m.title }))) return;
+    setBusy(true);
+    setLoadError(null);
+    try {
+      const { error } = await supabase.from("missions").delete().eq("id", m.id);
+      if (error) throw error;
+      if (missionResultsFilterId === m.id) setMissionResultsFilterId(null);
+      await loadMissionsAndStats(selectedClassId);
+      await loadAllMissionsOverview();
+    } catch (err: unknown) {
+      setLoadError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const signOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -1615,6 +1633,14 @@ export function TeacherDashboard() {
                         ({dLabel} · ≤{m.max_number}, {m.operation_mode}, {m.target_correct} ✓)
                       </span>
                     </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void deleteMission(m)}
+                      className="shrink-0 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {t("teacherDeleteMission")}
+                    </button>
                   </li>
                 );
               })}
