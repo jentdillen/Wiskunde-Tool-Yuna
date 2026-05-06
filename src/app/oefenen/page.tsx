@@ -28,6 +28,97 @@ import { isMissionUnlockedForKid, sortMissionsByDifficultyThenCreated } from "@/
 import { playSuccessBeep } from "@/lib/sound";
 import { getSupabase } from "@/lib/supabase/client";
 
+function pickCountWord(count: number, singular: string, plural: string): string {
+  return count === 1 ? singular : plural;
+}
+
+function hashString(input: string): number {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+function buildQuestionStory(question: Question, locale: "nl" | "en"): string {
+  const a = question.a;
+  const b = question.b;
+
+  if (locale === "nl") {
+    const star = (n: number) => pickCountWord(n, "ster", "sterren");
+    const rocket = (n: number) => pickCountWord(n, "raket", "raketten");
+    const moonRock = (n: number) => pickCountWord(n, "maansteen", "maanstenen");
+    const astronaut = (n: number) => pickCountWord(n, "astronaut", "astronauten");
+    const planet = (n: number) => pickCountWord(n, "planeet", "planeten");
+    const crate = (n: number) => pickCountWord(n, "krater", "kraters");
+
+    if (question.op === "+") {
+      const variants = [
+        `Er zijn ${a} ${star(a)} en ${b} ${rocket(b)}. Hoeveel zijn dat er samen?`,
+        `Nova telt ${a} ${moonRock(a)} en vindt er nog ${b}. Hoeveel heeft Nova er nu?`,
+        `Op planeet X staan ${a} ${crate(a)} en op planeet Y ${b}. Hoeveel ${crate(a + b)} zijn dat samen?`,
+      ];
+      return variants[hashString(`${a}|${b}|+`) % variants.length];
+    }
+
+    if (question.op === "-") {
+      const variants = [
+        `Nova heeft ${a} ${moonRock(a)} en geeft er ${b} weg. Hoeveel houdt Nova over?`,
+        `Er zijn ${a} ${rocket(a)} klaar voor vertrek, maar ${b} ${rocket(b)} blijven achter. Hoeveel vertrekken er?`,
+        `Milo zag ${a} ${star(a)} en daarna verdwenen er ${b}. Hoeveel ${star(a - b)} ziet Milo nog?`,
+      ];
+      return variants[hashString(`${a}|${b}|-`) % variants.length];
+    }
+
+    if (question.op === "*") {
+      const variants = [
+        `Er zijn ${a} ${rocket(a)} met telkens ${b} ${astronaut(b)}. Hoeveel astronauten zijn er in totaal?`,
+        `Nova vult ${a} ruimtekisten met telkens ${b} ${moonRock(b)}. Hoeveel maanstenen zitten er in totaal in de kisten?`,
+        `Op ${a} ${planet(a)} staan telkens ${b} vlaggen. Hoeveel vlaggen staan er in totaal?`,
+      ];
+      return variants[hashString(`${a}|${b}|*`) % variants.length];
+    }
+
+    const variants = [
+      `Milo verdeelt ${a} ${star(a)} over ${b} ${planet(b)}. Hoeveel ${star(a / b)} krijgt elke planeet?`,
+      `Er zijn ${a} ${moonRock(a)} die eerlijk over ${b} astronauten verdeeld worden. Hoeveel krijgt elke astronaut?`,
+      `Nova verdeelt ${a} snacks in ${b} gelijke doosjes. Hoeveel snacks zitten er in elk doosje?`,
+    ];
+    return variants[hashString(`${a}|${b}|/`) % variants.length];
+  }
+
+  if (question.op === "+") {
+    const variants = [
+      `There are ${a} stars and ${b} rockets. How many are there together?`,
+      `Nova counts ${a} moon rocks and finds ${b} more. How many does Nova have now?`,
+      `Planet X has ${a} craters and planet Y has ${b}. How many craters are there in total?`,
+    ];
+    return variants[hashString(`${a}|${b}|+`) % variants.length];
+  }
+  if (question.op === "-") {
+    const variants = [
+      `Nova has ${a} moon rocks and gives away ${b}. How many are left?`,
+      `There are ${a} rockets ready to launch, but ${b} stay behind. How many launch?`,
+      `Milo sees ${a} stars and then ${b} disappear. How many stars are left?`,
+    ];
+    return variants[hashString(`${a}|${b}|-`) % variants.length];
+  }
+  if (question.op === "*") {
+    const variants = [
+      `There are ${a} rockets with ${b} astronauts each. How many astronauts are there in total?`,
+      `Nova fills ${a} space crates with ${b} moon rocks each. How many moon rocks is that in total?`,
+      `There are ${a} planets with ${b} flags on each one. How many flags are there in total?`,
+    ];
+    return variants[hashString(`${a}|${b}|*`) % variants.length];
+  }
+  const variants = [
+    `Milo shares ${a} stars across ${b} planets. How many stars does each planet get?`,
+    `There are ${a} moon rocks shared equally among ${b} astronauts. How many does each astronaut get?`,
+    `Nova divides ${a} snacks into ${b} equal boxes. How many snacks are in each box?`,
+  ];
+  return variants[hashString(`${a}|${b}|/`) % variants.length];
+}
+
 function missionProgress(correct: number, target: number): number {
   return Math.min(100, Math.floor((correct / target) * 100));
 }
@@ -35,7 +126,7 @@ function missionProgress(correct: number, target: number): number {
 const WRONG_BEFORE_HELP = 4;
 
 function OefenenInner() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const missionId = searchParams.get("mission");
@@ -70,8 +161,13 @@ function OefenenInner() {
   const targetCorrect = mission?.target_correct ?? 20;
   const progress = missionProgress(correct, targetCorrect);
 
+  const questionStoryText = useMemo(() => {
+    if (!question) return t("coachReady");
+    return buildQuestionStory(question, locale);
+  }, [question, locale, t]);
+
   const coachMood = feedback === "correct" ? "happy" : feedback === "wrong" ? "encourage" : "idle";
-  let coachText = t("coachReady");
+  let coachText = questionStoryText;
   if (feedback === "correct") coachText = t("coachGood");
   if (feedback === "wrong") coachText = t("coachEncourage");
   if (missionComplete) coachText = t("missionCompleteBody");
@@ -493,9 +589,13 @@ function OefenenInner() {
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-cyan-200/80">
                 {t("progressLabelShort")}: {progress}%
               </p>
-              <p className="text-4xl font-black tabular-nums text-white sm:text-5xl" aria-live="polite">
-                {formatQuestion(question)}
-              </p>
+              <div
+                className="w-full rounded-3xl border-2 border-cyan-300/60 bg-slate-900/95 px-4 py-4 shadow-[0_0_24px_rgba(34,211,238,0.18)] sm:px-6 sm:py-5"
+                aria-live="polite"
+              >
+                <p className="text-xs font-black uppercase tracking-wider text-cyan-200/85">{t("colQuestion")}</p>
+                <p className="mt-2 text-5xl font-black tabular-nums text-white sm:text-6xl">{formatQuestion(question)}</p>
+              </div>
 
               <form
                 onSubmit={

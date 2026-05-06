@@ -150,7 +150,8 @@ export function generateQuestionUnique(max: number, mode: OperationMode, used: R
 }
 
 export function formatQuestion(q: Question): string {
-  return `${q.a} ${q.op} ${q.b} = ?`;
+  const displayOp = q.op === "*" ? "x" : q.op === "/" ? ":" : q.op;
+  return `${q.a} ${displayOp} ${q.b} = ?`;
 }
 
 /** Decode `a|op|b` from help-request storage for display. */
